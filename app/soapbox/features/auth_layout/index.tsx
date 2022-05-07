@@ -12,6 +12,8 @@ import LoginPage from '../auth_login/components/login_page';
 import PasswordReset from '../auth_login/components/password_reset';
 import PasswordResetConfirm from '../auth_login/components/password_reset_confirm';
 import RegistrationForm from '../auth_login/components/registration_form';
+import ExternalLoginForm from '../external_login/components/external-login-form';
+import RegisterInvite from '../register_invite';
 import Verification from '../verification';
 import EmailPassthru from '../verification/email_passthru';
 
@@ -45,10 +47,12 @@ const AuthLayout = () => {
                 <Switch>
                   <Route exact path='/verify' component={Verification} />
                   <Route exact path='/verify/email/:token' component={EmailPassthru} />
+                  <Route exact path='/login/external' component={ExternalLoginForm} />
                   <Route exact path='/login' component={LoginPage} />
                   <Route exact path='/signup' component={RegistrationForm} />
                   <Route exact path='/reset-password' component={PasswordReset} />
                   <Route exact path='/edit-password' component={PasswordResetConfirm} />
+                  <Route path='/invite/:token' component={RegisterInvite} />
 
                   <Redirect from='/auth/password/new' to='/reset-password' />
                   <Redirect from='/auth/password/edit' to='/edit-password' />
