@@ -1,20 +1,22 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
-import ImmutablePropTypes from 'react-immutable-proptypes';
-import { injectIntl, defineMessages } from 'react-intl';
-import ImmutablePureComponent from 'react-immutable-pure-component';
-import { Map as ImmutableMap, List as ImmutableList } from 'immutable';
-import { fetchChatMessages, deleteChatMessage } from 'soapbox/actions/chats';
-import emojify from 'soapbox/features/emoji/emoji';
 import classNames from 'classnames';
-import { openModal } from 'soapbox/actions/modal';
+import { Map as ImmutableMap, List as ImmutableList } from 'immutable';
 import { escape, throttle } from 'lodash';
-import { MediaGallery } from 'soapbox/features/ui/util/async-components';
-import Bundle from 'soapbox/features/ui/components/bundle';
-import DropdownMenuContainer from 'soapbox/containers/dropdown_menu_container';
-import { initReportById } from 'soapbox/actions/reports';
+import PropTypes from 'prop-types';
+import React from 'react';
+import ImmutablePropTypes from 'react-immutable-proptypes';
+import ImmutablePureComponent from 'react-immutable-pure-component';
+import { injectIntl, defineMessages } from 'react-intl';
+import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
+
+import { fetchChatMessages, deleteChatMessage } from 'soapbox/actions/chats';
+import { openModal } from 'soapbox/actions/modals';
+import { initReportById } from 'soapbox/actions/reports';
+import { Text } from 'soapbox/components/ui';
+import DropdownMenuContainer from 'soapbox/containers/dropdown_menu_container';
+import emojify from 'soapbox/features/emoji/emoji';
+import Bundle from 'soapbox/features/ui/components/bundle';
+import { MediaGallery } from 'soapbox/features/ui/util/async-components';
 import { onlyEmoji } from 'soapbox/utils/rich_content';
 
 const BIG_EMOJI_LIMIT = 1;
@@ -33,7 +35,7 @@ const timeChange = (prev, curr) => {
 
   if (prevDate !== currDate) {
     return currDate === nowDate ? 'today' : 'date';
-  };
+  }
 
   return null;
 };
@@ -261,9 +263,21 @@ class ChatMessageList extends ImmutablePureComponent {
   renderMessage = (chatMessage) => {
     const { me, intl } = this.props;
     const menu = [
-      { text: intl.formatMessage(messages.delete), action: this.handleDeleteMessage(chatMessage.get('chat_id'), chatMessage.get('id')) },
-      { text: intl.formatMessage(messages.report), action: this.handleReportUser(chatMessage.get('account_id')) },
+      {
+        text: intl.formatMessage(messages.delete),
+        action: this.handleDeleteMessage(chatMessage.get('chat_id'), chatMessage.get('id')),
+        icon: require('@tabler/icons/icons/trash.svg'),
+        destructive: true,
+      },
     ];
+
+    if (chatMessage.get('account_id') !== me) {
+      menu.push({
+        text: intl.formatMessage(messages.report),
+        action: this.handleReportUser(chatMessage.get('account_id')),
+        icon: require('@tabler/icons/icons/flag.svg'),
+      });
+    }
 
     return (
       <div
@@ -280,15 +294,11 @@ class ChatMessageList extends ImmutablePureComponent {
           tabIndex={0}
         >
           {this.maybeRenderMedia(chatMessage)}
-          <span
-            className='chat-message__content'
-            dangerouslySetInnerHTML={{ __html: this.parseContent(chatMessage) }}
-          />
+          <Text size='sm' dangerouslySetInnerHTML={{ __html: this.parseContent(chatMessage) }} />
           <div className='chat-message__menu'>
             <DropdownMenuContainer
               items={menu}
-              icon='ellipsis-h'
-              size={18}
+              src={require('@tabler/icons/icons/dots.svg')}
               direction='top'
               title={intl.formatMessage(messages.more)}
             />
@@ -304,17 +314,17 @@ class ChatMessageList extends ImmutablePureComponent {
     return (
       <div className='chat-messages' ref={this.setRef}>
         {chatMessages.reduce((acc, curr, idx) => {
-          const lastMessage = chatMessages.get(idx-1);
+          const lastMessage = chatMessages.get(idx - 1);
 
           if (lastMessage) {
             const key = `${curr.get('id')}_divider`;
-            switch(timeChange(lastMessage, curr)) {
-            case 'today':
-              acc.push(this.renderDivider(key, intl.formatMessage(messages.today)));
-              break;
-            case 'date':
-              acc.push(this.renderDivider(key, new Date(curr.get('created_at')).toDateString()));
-              break;
+            switch (timeChange(lastMessage, curr)) {
+              case 'today':
+                acc.push(this.renderDivider(key, intl.formatMessage(messages.today)));
+                break;
+              case 'date':
+                acc.push(this.renderDivider(key, new Date(curr.get('created_at')).toDateString()));
+                break;
             }
           }
 

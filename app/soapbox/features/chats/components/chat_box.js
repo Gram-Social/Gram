@@ -1,20 +1,22 @@
-import React from 'react';
-import { connect } from 'react-redux';
+import { OrderedSet as ImmutableOrderedSet } from 'immutable';
 import PropTypes from 'prop-types';
+import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
-import { injectIntl, defineMessages } from 'react-intl';
 import ImmutablePureComponent from 'react-immutable-pure-component';
+import { injectIntl, defineMessages } from 'react-intl';
+import { connect } from 'react-redux';
+
 import {
   sendChatMessage,
   markChatRead,
 } from 'soapbox/actions/chats';
-import { OrderedSet as ImmutableOrderedSet } from 'immutable';
-import ChatMessageList from './chat_message_list';
-import UploadButton from 'soapbox/features/compose/components/upload_button';
 import { uploadMedia } from 'soapbox/actions/media';
-import UploadProgress from 'soapbox/features/compose/components/upload_progress';
-import { truncateFilename } from 'soapbox/utils/media';
 import IconButton from 'soapbox/components/icon_button';
+import UploadProgress from 'soapbox/features/compose/components/upload-progress';
+import UploadButton from 'soapbox/features/compose/components/upload_button';
+import { truncateFilename } from 'soapbox/utils/media';
+
+import ChatMessageList from './chat_message_list';
 
 const messages = defineMessages({
   placeholder: { id: 'chat_box.input.placeholder', defaultMessage: 'Send a message…' },
@@ -23,7 +25,7 @@ const messages = defineMessages({
 
 const mapStateToProps = (state, { chatId }) => ({
   me: state.get('me'),
-  chat: state.getIn(['chats', chatId]),
+  chat: state.getIn(['chats', 'items', chatId]),
   chatMessageIds: state.getIn(['chat_message_lists', chatId], ImmutableOrderedSet()),
 });
 
@@ -38,7 +40,7 @@ class ChatBox extends ImmutablePureComponent {
     intl: PropTypes.object.isRequired,
     chatId: PropTypes.string.isRequired,
     chatMessageIds: ImmutablePropTypes.orderedSet,
-    chat: ImmutablePropTypes.map,
+    chat: ImmutablePropTypes.record,
     onSetInputRef: PropTypes.func,
     me: PropTypes.node,
   }
@@ -130,7 +132,7 @@ class ChatBox extends ImmutablePureComponent {
 
   onUploadProgress = (e) => {
     const { loaded, total } = e;
-    this.setState({ uploadProgress: loaded/total });
+    this.setState({ uploadProgress: loaded / total });
   }
 
   handleFiles = (files) => {
@@ -158,7 +160,10 @@ class ChatBox extends ImmutablePureComponent {
           {truncateFilename(attachment.preview_url, 20)}
         </div>
         <div class='chat-box__remove-attachment'>
-          <IconButton icon='remove' onClick={this.handleRemoveFile} />
+          <IconButton
+            src={require('@tabler/icons/icons/x.svg')}
+            onClick={this.handleRemoveFile}
+          />
         </div>
       </div>
     );
@@ -169,14 +174,11 @@ class ChatBox extends ImmutablePureComponent {
     const { resetFileKey } = this.state;
 
     return this.canSubmit() ? (
-      <div className='chat-box__send'>
-        <IconButton
-          icon='send'
-          title={intl.formatMessage(messages.send)}
-          size={16}
-          onClick={this.sendMessage}
-        />
-      </div>
+      <IconButton
+        src={require('@tabler/icons/icons/send.svg')}
+        title={intl.formatMessage(messages.send)}
+        onClick={this.sendMessage}
+      />
     ) : (
       <UploadButton onSelectFile={this.handleFiles} resetFileKey={resetFileKey} />
     );
@@ -191,9 +193,11 @@ class ChatBox extends ImmutablePureComponent {
       <div className='chat-box' onMouseOver={this.handleHover}>
         <ChatMessageList chatMessageIds={chatMessageIds} chatId={chatId} />
         {this.renderAttachment()}
-        <UploadProgress active={isUploading} progress={uploadProgress*100} />
+        <UploadProgress active={isUploading} progress={uploadProgress * 100} />
         <div className='chat-box__actions simple_form'>
-          {this.renderActionButton()}
+          <div className='chat-box__send'>
+            {this.renderActionButton()}
+          </div>
           <textarea
             rows={1}
             placeholder={intl.formatMessage(messages.placeholder)}

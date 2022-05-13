@@ -1,16 +1,17 @@
-import React from 'react';
+import noop from 'lodash/noop';
 import PropTypes from 'prop-types';
+import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import Toggle from 'react-toggle';
-import noop from 'lodash/noop';
+
 import StatusContent from '../../../components/status_content';
-import { MediaGallery, Video, Audio } from '../../ui/util/async-components';
 import Bundle from '../../ui/components/bundle';
+import { MediaGallery, Video, Audio } from '../../ui/util/async-components';
 
 export default class StatusCheckBox extends React.PureComponent {
 
   static propTypes = {
-    status: ImmutablePropTypes.map.isRequired,
+    status: ImmutablePropTypes.record.isRequired,
     checked: PropTypes.bool,
     onToggle: PropTypes.func.isRequired,
     disabled: PropTypes.bool,
@@ -26,7 +27,7 @@ export default class StatusCheckBox extends React.PureComponent {
 
     if (status.get('media_attachments').size > 0) {
       if (status.get('media_attachments').some(item => item.get('type') === 'unknown')) {
-
+        // Do nothing
       } else if (status.getIn(['media_attachments', 0, 'type']) === 'video') {
         const video = status.getIn(['media_attachments', 0]);
 
@@ -81,7 +82,7 @@ export default class StatusCheckBox extends React.PureComponent {
         </div>
 
         <div className='status-check-box-toggle'>
-          <Toggle checked={checked} onChange={onToggle} disabled={disabled} />
+          <Toggle checked={checked} onChange={onToggle} disabled={disabled} icons={false} />
         </div>
       </div>
     );

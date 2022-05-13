@@ -1,13 +1,15 @@
-import React from 'react';
-import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { injectIntl, FormattedMessage } from 'react-intl';
+import { connect } from 'react-redux';
 import Toggle from 'react-toggle';
-import Button from '../../../components/button';
-import { closeModal } from '../../../actions/modal';
-import { muteAccount } from '../../../actions/accounts';
-import { toggleHideNotifications } from '../../../actions/mutes';
 
+import { muteAccount } from 'soapbox/actions/accounts';
+import { closeModal } from 'soapbox/actions/modals';
+import { toggleHideNotifications } from 'soapbox/actions/mutes';
+import { Modal, HStack, Stack } from 'soapbox/components/ui';
+
+import { Text } from '../../../components/ui';
 
 const mapStateToProps = state => {
   return {
@@ -47,10 +49,6 @@ class MuteModal extends React.PureComponent {
     intl: PropTypes.object.isRequired,
   };
 
-  componentDidMount() {
-    this.button.focus();
-  }
-
   handleClick = () => {
     this.props.onClose();
     this.props.onConfirm(this.props.account, this.props.notifications);
@@ -58,10 +56,6 @@ class MuteModal extends React.PureComponent {
 
   handleCancel = () => {
     this.props.onClose();
-  }
-
-  setRef = (c) => {
-    this.button = c;
   }
 
   toggleNotifications = () => {
@@ -72,33 +66,44 @@ class MuteModal extends React.PureComponent {
     const { account, notifications } = this.props;
 
     return (
-      <div className='modal-root__modal mute-modal'>
-        <div className='mute-modal__container'>
-          <p>
+      <Modal
+        title={
+          <FormattedMessage
+            id='confirmations.mute.heading'
+            defaultMessage='Mute @{name}'
+            values={{ name: account.get('acct') }}
+          />
+        }
+        onClose={this.handleCancel}
+        confirmationAction={this.handleClick}
+        confirmationText={<FormattedMessage id='confirmations.mute.confirm' defaultMessage='Mute' />}
+        cancelText={<FormattedMessage id='confirmation_modal.cancel' defaultMessage='Cancel' />}
+        cancelAction={this.handleCancel}
+      >
+        <Stack space={4}>
+          <Text>
             <FormattedMessage
               id='confirmations.mute.message'
               defaultMessage='Are you sure you want to mute {name}?'
               values={{ name: <strong>@{account.get('acct')}</strong> }}
             />
-          </p>
-          <div>
-            <label htmlFor='mute-modal__hide-notifications-checkbox'>
-              <FormattedMessage id='mute_modal.hide_notifications' defaultMessage='Hide notifications from this user?' />
-              {' '}
-              <Toggle id='mute-modal__hide-notifications-checkbox' checked={notifications} onChange={this.toggleNotifications} />
-            </label>
-          </div>
-        </div>
+          </Text>
 
-        <div className='mute-modal__action-bar'>
-          <Button onClick={this.handleCancel} className='mute-modal__cancel-button'>
-            <FormattedMessage id='confirmation_modal.cancel' defaultMessage='Cancel' />
-          </Button>
-          <Button onClick={this.handleClick} ref={this.setRef}>
-            <FormattedMessage id='confirmations.mute.confirm' defaultMessage='Mute' />
-          </Button>
-        </div>
-      </div>
+          <label>
+            <HStack alignItems='center' space={2}>
+              <Text tag='span'>
+                <FormattedMessage id='mute_modal.hide_notifications' defaultMessage='Hide notifications from this user?' />
+              </Text>
+
+              <Toggle
+                checked={notifications}
+                onChange={this.toggleNotifications}
+                icons={false}
+              />
+            </HStack>
+          </label>
+        </Stack>
+      </Modal>
     );
   }
 

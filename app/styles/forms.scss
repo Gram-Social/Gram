@@ -1,3 +1,26 @@
+select {
+  @apply pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md;
+}
+
+.form-error::before,
+.form-error::after {
+  border: solid transparent;
+  bottom: 100%;
+  content: '';
+  height: 0;
+  left: 10px;
+  pointer-events: none;
+  width: 0;
+  position: absolute;
+}
+
+.form-error::before {
+  --tw-bg-opacity: 1;
+  border-bottom-color: rgba(254, 202, 202, var(--tw-bg-opacity));
+  border-width: 6px;
+  margin-left: -1px;
+}
+
 $no-columns-breakpoint: 600px;
 
 code {
@@ -13,9 +36,6 @@ code {
 
 .simple_form {
   .input {
-    margin-bottom: 8px;
-    overflow: hidden;
-
     &.hidden {
       margin: 0;
     }
@@ -45,10 +65,9 @@ code {
       position: relative;
 
       .label_input > label {
+        @apply text-sm font-medium text-gray-700 dark:text-gray-400;
         font-family: inherit;
         font-size: 14px;
-        padding-top: 5px;
-        color: var(--primary-text-color);
         display: block;
         width: auto;
       }
@@ -64,7 +83,7 @@ code {
 
       input[type="checkbox"] {
         position: absolute;
-        top: 3px;
+        top: 1px;
         left: 0;
       }
 
@@ -164,11 +183,11 @@ code {
     }
   }
 
-  .input.with_label {
+  .input {
     .label_input > label {
+      @apply text-gray-700 dark:text-gray-400;
       font-family: inherit;
       font-size: 14px;
-      color: var(--primary-text-color);
       display: block;
       word-wrap: break-word;
       font-weight: 500;
@@ -211,6 +230,10 @@ code {
 
   .fields-group {
     margin-bottom: 25px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
 
     .input:last-child {
       margin-bottom: 0;
@@ -295,6 +318,7 @@ code {
     input[type=text],
     input[type=number],
     input[type=email],
+    input[type=url],
     input[type=password],
     textarea {
       color: var(--primary-text-color--faint);
@@ -305,9 +329,11 @@ code {
   input[type=text],
   input[type=number],
   input[type=email],
+  input[type=url],
   input[type=password],
   textarea,
   .rfipbtn {
+    @apply border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 text-black dark:text-white;
     box-sizing: border-box;
     font-size: 16px;
     color: var(--primary-text-color);
@@ -316,10 +342,10 @@ code {
     outline: 0;
     font-family: inherit;
     resize: vertical;
-    background: var(--background-color);
-    border: 1px solid var(--highlight-text-color);
-    border-radius: 4px;
-    padding: 10px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--input-border-color);
+    border-radius: 6px;
+    padding: 8px 12px;
     transition: 0.2s;
 
     &:invalid {
@@ -330,13 +356,18 @@ code {
       border-color: lighten($error-red, 12%);
     }
 
-    &:required:valid {
-      border-color: $valid-value-color;
-    }
+    // &:required:valid {
+    //   border-color: $valid-value-color;
+    // }
 
     &:active,
     &:focus {
-      border-color: var(--brand-color--hicontrast);
+      border-color: var(--brand-color);
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      box-shadow: rgb(255, 255, 255) 0 0 0 0,
+        var(--brand-color) 0 0 0 1px,
+        rgba(0, 0, 0, 0.05) 0 1px 2px 0;
     }
   }
 
@@ -348,6 +379,7 @@ code {
   input[type=text][disabled],
   input[type=number][disabled],
   input[type=email][disabled],
+  input[type=url][disabled],
   input[type=password][disabled],
   textarea[disabled] {
     color: var(--primary-text-color--faint);
@@ -362,18 +394,19 @@ code {
     input[type=text],
     input[type=number],
     input[type=email],
+    input[type=url],
     input[type=password],
     textarea,
     select {
       border-color: lighten($error-red, 12%);
     }
+  }
 
-    .error {
-      display: block;
-      font-weight: 500;
-      color: lighten($error-red, 12%);
-      margin-top: 4px;
-    }
+  .error {
+    display: block;
+    font-weight: 500;
+    color: lighten($error-red, 12%);
+    margin-top: 4px;
   }
 
   .input.disabled {
@@ -381,8 +414,9 @@ code {
   }
 
   .actions {
-    margin-top: 30px;
+    margin-top: 20px;
     display: flex;
+    justify-content: flex-end;
 
     &.actions--top {
       margin-top: 0;
@@ -390,96 +424,91 @@ code {
     }
   }
 
-  button,
-  .button,
-  .block-button,
-  .color-swatch {
-    display: block;
-    width: 100%;
-    border: 0;
-    border-radius: 4px;
-    background: var(--brand-color);
-    color: #fff;
-    font-size: 18px;
-    line-height: inherit;
-    height: auto;
-    padding: 10px;
-    text-transform: uppercase;
-    text-decoration: none;
-    text-align: center;
-    box-sizing: border-box;
-    cursor: pointer;
-    font-weight: 500;
-    outline: 0;
-    margin-bottom: 10px;
-    margin-right: 10px;
+  // button,
+  // .button,
+  // .block-button,
+  // .color-swatch {
+  //   display: block;
+  //   width: 100%;
+  //   border: 0;
+  //   border-radius: 4px;
+  //   background: var(--brand-color);
+  //   color: #fff;
+  //   line-height: inherit;
+  //   height: auto;
+  //   padding: 10px;
+  //   text-decoration: none;
+  //   text-align: center;
+  //   box-sizing: border-box;
+  //   cursor: pointer;
+  //   font-weight: 500;
+  //   outline: 0;
 
-    &:last-child {
-      margin-right: 0;
-    }
+  //   &:last-child {
+  //     margin-right: 0;
+  //   }
 
-    &:hover,
-    &:active,
-    &:focus {
-      background-color: var(--brand-color--hicontrast);
-    }
+  //   &:hover,
+  //   &:active,
+  //   &:focus {
+  //     background-color: var(--brand-color--hicontrast);
+  //   }
 
-    &.negative {
-      background: $error-value-color;
+  //   &.negative {
+  //     background: $error-value-color;
 
-      &:hover {
-        background-color: lighten($error-value-color, 5%);
-      }
+  //     &:hover {
+  //       background-color: lighten($error-value-color, 5%);
+  //     }
 
-      &:active,
-      &:focus {
-        background-color: darken($error-value-color, 5%);
-      }
-    }
+  //     &:active,
+  //     &:focus {
+  //       background-color: darken($error-value-color, 5%);
+  //     }
+  //   }
 
-    &.accordion__toggle {
-      display: inline-block;
-      width: auto;
-      border: 0;
-      border-radius: 0;
-      background: none;
-      color: var(--primary-text-color--faint);
-      font-size: 18px;
-      line-height: inherit;
-      height: auto;
-      padding: 0 10px;
-      text-transform: none;
-      text-decoration: none;
-      text-align: center;
-      box-sizing: border-box;
-      cursor: pointer;
-      font-weight: 500;
-      outline: 0;
-      margin-bottom: 0;
-      margin-right: 10px;
-    }
-  }
+  //   &.accordion__toggle {
+  //     display: inline-block;
+  //     width: auto;
+  //     border: 0;
+  //     border-radius: 0;
+  //     background: none;
+  //     color: var(--primary-text-color--faint);
+  //     font-size: 18px;
+  //     line-height: inherit;
+  //     height: auto;
+  //     padding: 0 10px;
+  //     text-transform: none;
+  //     text-decoration: none;
+  //     text-align: center;
+  //     box-sizing: border-box;
+  //     cursor: pointer;
+  //     font-weight: 500;
+  //     outline: 0;
+  //     margin-bottom: 0;
+  //     margin-right: 10px;
+  //   }
+  // }
 
-  select {
-    appearance: none;
-    box-sizing: border-box;
-    font-size: 16px;
-    color: var(--primary-text-color);
-    background: var(--background-color);
-    display: block;
-    width: 100%;
-    outline: 0;
-    font-family: inherit;
-    resize: vertical;
-    border: 1px solid var(--highlight-text-color);
-    border-radius: 4px;
-    padding-left: 10px;
-    padding-right: 30px;
-    height: 41px;
-    position: relative;
-    margin-top: 8px;
-    cursor: pointer;
-  }
+  // select {
+  //   appearance: none;
+  //   background-color: transparent;
+  //   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  //   background-position: right 0.5rem center;
+  //   background-repeat: no-repeat;
+  //   background-size: 1.5em 1.5em;
+  //   border-radius: 0.375rem;
+  //   border: none;
+  //   color: var(--gray-500);
+  //   display: inline-block;
+  //   font-family: var(--font-sans-serif), sans-serif;
+  //   font-size: 14px;
+  //   height: var(--input-height);
+  //   padding-bottom: 0.5rem;
+  //   padding-left: 0.75rem;
+  //   padding-right: 2.5rem;
+  //   padding-top: 0.5rem;
+  // }
 
   .select-wrapper {
     display: flex;
@@ -488,7 +517,7 @@ code {
     &::after {
       display: flex;
       align-items: center;
-      font-family: "ForkAwesome";
+      font-family: 'Font Awesome 5 Free';
       content: "";
       position: absolute;
       right: 12px;
@@ -496,6 +525,7 @@ code {
       padding-left: 12px;
       pointer-events: none;
       margin-top: 8px;
+      font-weight: 900;
     }
   }
 
@@ -508,28 +538,6 @@ code {
         width: 32px;
         height: 16px;
         margin-left: 12px;
-      }
-    }
-
-    &__font_icon_picker {
-      font-size: 14px;
-
-      .font-icon-button {
-        padding: 9px;
-        border: 1px solid var(--highlight-text-color);
-        border-radius: 4px;
-        cursor: pointer;
-        outline: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 41px;
-        box-sizing: border-box;
-
-        .fa {
-          font-size: 18px;
-          color: var(--primary-text-color);
-        }
       }
     }
 
@@ -600,6 +608,31 @@ code {
     margin-bottom: 14px;
     font-weight: bold;
   }
+
+  .showable-password {
+    position: relative;
+
+    input {
+      padding-right: 36px;
+    }
+
+    .icon-button {
+      @apply text-black dark:text-white;
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 38px;
+      width: 36px;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+
+      .svg-icon {
+        height: 20px;
+        width: 20px;
+      }
+    }
+  }
 }
 
 .block-icon {
@@ -607,20 +640,6 @@ code {
   margin: 0 auto;
   margin-bottom: 10px;
   font-size: 24px;
-}
-
-.qr-code {
-  flex: 0 0 auto;
-  background: var(--foreground-color);
-  padding: 4px;
-  margin: 0 10px 20px 0;
-  box-shadow: 0 0 15px rgba($base-shadow-color, 0.2);
-  display: inline-block;
-
-  svg {
-    display: block;
-    margin: 0;
-  }
 }
 
 .simple_form {
@@ -664,8 +683,10 @@ code {
 }
 
 .columns-area {
-  form.simple_form {
-    padding: 15px;
+  form.simple_form--public {
+    @include standard-panel;
+    margin-top: 20px;
+    padding: 60px 30px;
   }
 }
 
@@ -680,31 +701,6 @@ code {
 
   input[type="text"] {
     border-radius: 0 0 4px 4px;
-  }
-}
-
-.authtokens {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-gap: 20px;
-}
-
-.authtoken {
-  &__app-name {
-    font-size: 16px;
-    font-weight: bold;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__valid-until {
-    font-size: 14px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__revoke {
-    margin-top: 10px;
   }
 }
 
@@ -733,47 +729,25 @@ code {
   }
 }
 
-.input .row > .fa-times-circle {
+.delete-account {
+  margin-top: 50px;
+  display: flex;
+  justify-content: center;
+}
+
+.input .row > .svg-icon.delete-field {
+  height: 20px;
+  width: 20px;
   position: absolute;
-  right: 15px;
+  right: 13px;
   cursor: pointer;
   color: $error-red;
-  transform: translateY(-9px);
+  transform: translateY(-11px);
 }
 
-.input .row > .input.with_label + .fa-times-circle {
-  right: 7px;
-  transform: translateY(9px);
-}
-
-.site-preview {
-  border-radius: 4px;
-  overflow: hidden;
-  height: 164px;
-  border: 1px solid;
-  margin-bottom: 40px;
-  background: var(--background-color);
-
-  * {
-    z-index: 0;
-  }
-
-  a {
-    cursor: default;
-  }
-
-  .ui {
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    height: 100%;
-  }
-
-  .page {
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-  }
+.input .row > .input.with_label + .svg-icon.delete-field {
+  right: 5px;
+  transform: translateY(7px);
 }
 
 .input.with_label.toggle .label_input {
@@ -790,11 +764,18 @@ code {
   margin: 10px 0 0;
 
   .button {
+    display: flex;
+    align-items: center;
     border: 0;
     background: transparent;
 
     &:hover {
       color: var(--primary-text-color);
+    }
+
+    .svg-icon {
+      height: 20px;
+      width: 20px;
     }
   }
 }

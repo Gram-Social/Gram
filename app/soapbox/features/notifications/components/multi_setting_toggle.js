@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import Toggle from 'react-toggle';
 
@@ -11,15 +11,11 @@ export default class MultiSettingToggle extends React.PureComponent {
     settingPaths: PropTypes.array.isRequired,
     label: PropTypes.node,
     onChange: PropTypes.func.isRequired,
-    icons: PropTypes.oneOfType([
-      PropTypes.bool,
-      PropTypes.object,
-    ]),
     ariaLabel: PropTypes.string,
   }
 
   onChange = ({ target }) => {
-    for (var i = 0; i < this.props.settingPaths.length; i++) {
+    for (let i = 0; i < this.props.settingPaths.length; i++) {
       this.props.onChange(this.props.settingPaths[i], target.checked);
     }
   }
@@ -29,12 +25,12 @@ export default class MultiSettingToggle extends React.PureComponent {
   }
 
   render() {
-    const { prefix, settingPaths, label, icons, ariaLabel } = this.props;
+    const { prefix, settingPaths, label, ariaLabel } = this.props;
     const id = ['setting-toggle', prefix].filter(Boolean).join('-');
 
     return (
       <div className='setting-toggle' aria-label={ariaLabel}>
-        <Toggle id={id} checked={settingPaths.every(this.areTrue)} onChange={this.onChange} icons={icons} onKeyDown={this.onKeyDown} />
+        <Toggle id={id} checked={settingPaths.every(this.areTrue)} onChange={this.onChange} onKeyDown={this.onKeyDown} />
         {label && (<label htmlFor={id} className='setting-toggle__label'>{label}</label>)}
       </div>
     );

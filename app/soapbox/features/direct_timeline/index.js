@@ -1,15 +1,20 @@
-import React from 'react';
-import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import StatusListContainer from '../ui/containers/status_list_container';
-import Column from '../../components/column';
-import ColumnHeader from '../../components/column_header';
-import { expandDirectTimeline } from '../../actions/timelines';
+import React from 'react';
 import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
+import { connect } from 'react-redux';
+
+import { directComposeById } from 'soapbox/actions/compose';
+import AccountSearch from 'soapbox/components/account_search';
+
 import { connectDirectStream } from '../../actions/streaming';
+import { expandDirectTimeline } from '../../actions/timelines';
+import ColumnHeader from '../../components/column_header';
+import { Column } from '../../components/ui';
+import StatusListContainer from '../ui/containers/status_list_container';
 
 const messages = defineMessages({
   title: { id: 'column.direct', defaultMessage: 'Direct messages' },
+  searchPlaceholder: { id: 'direct.search_placeholder', defaultMessage: 'Send a message to…' },
 });
 
 const mapStateToProps = state => ({
@@ -40,6 +45,10 @@ class DirectTimeline extends React.PureComponent {
     }
   }
 
+  handleSuggestion = accountId => {
+    this.props.dispatch(directComposeById(accountId));
+  }
+
   handleLoadMore = maxId => {
     this.props.dispatch(expandDirectTimeline({ maxId }));
   }
@@ -48,7 +57,7 @@ class DirectTimeline extends React.PureComponent {
     const { intl, hasUnread } = this.props;
 
     return (
-      <Column label={intl.formatMessage(messages.title)}>
+      <Column label={intl.formatMessage(messages.title)} transparent>
         <ColumnHeader
           icon='envelope'
           active={hasUnread}
@@ -56,11 +65,17 @@ class DirectTimeline extends React.PureComponent {
           onPin={this.handlePin}
         />
 
+        <AccountSearch
+          placeholder={intl.formatMessage(messages.searchPlaceholder)}
+          onSelected={this.handleSuggestion}
+        />
+
         <StatusListContainer
           scrollKey='direct_timeline'
           timelineId='direct'
           onLoadMore={this.handleLoadMore}
           emptyMessage={<FormattedMessage id='empty_column.direct' defaultMessage="You don't have any direct messages yet. When you send or receive one, it will show up here." />}
+          divideType='space'
         />
       </Column>
     );

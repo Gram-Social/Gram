@@ -1,3 +1,5 @@
+@use 'sass:math';
+
 // OpenDyslexic
 @font-face {
   font-family: 'OpenDyslexic';
@@ -26,9 +28,7 @@
 // TYPEOGRAPHY MIXINS
 
 // declare the font family using these shortcuts
-@mixin font-roboto { font-family: 'Roboto', Arial, sans-serif !important; }
-
-@mixin font-montserrat { font-family: 'Montserrat', Arial, sans-serif !important; }
+@mixin font-inter { font-family: 'Inter', Arial, sans-serif !important; }
 
 // Declare font weights as a numerical value in rendered output
 // Prevents certain browsers which do not play nice with "light, medium" textual declarations
@@ -46,14 +46,14 @@
 // html and body declaration allows developer to pass px value as argument
 // Rendered css will default to "rem" and fall back to "px" for unsupported browsers
 @mixin font-size($size) {
-  $rem: ($size / 10);
+  $rem: math.div($size, 10);
   $px: $size;
   font-size: #{$px + "px"};
   font-size: #{$rem + "rem"};
 }
 
 @mixin line-height($size) {
-  $rem: ($size / 10);
+  $rem: math.div($size, 10);
   $px: $size;
   line-height: #{$px + "px"};
   line-height: #{$rem + "rem"};

@@ -1,18 +1,20 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import ImmutablePureComponent from 'react-immutable-pure-component';
-import PropTypes from 'prop-types';
-import ImmutablePropTypes from 'react-immutable-proptypes';
 import { debounce } from 'lodash';
-import LoadingIndicator from '../../../components/loading_indicator';
+import PropTypes from 'prop-types';
+import React from 'react';
+import ImmutablePropTypes from 'react-immutable-proptypes';
+import ImmutablePureComponent from 'react-immutable-pure-component';
+import { FormattedMessage } from 'react-intl';
+import { connect } from 'react-redux';
+
+import { Spinner } from 'soapbox/components/ui';
+
 import {
   fetchMembers,
   expandMembers,
 } from '../../../actions/groups';
-import { FormattedMessage } from 'react-intl';
+import ScrollableList from '../../../components/scrollable_list';
 import AccountContainer from '../../../containers/account_container';
 import Column from '../../ui/components/column';
-import ScrollableList from '../../../components/scrollable_list';
 
 const mapStateToProps = (state, { params: { id } }) => ({
   group: state.getIn(['groups', id]),
@@ -52,7 +54,7 @@ class GroupMembers extends ImmutablePureComponent {
     if (!group || !accountIds) {
       return (
         <Column>
-          <LoadingIndicator />
+          <Spinner />
         </Column>
       );
     }

@@ -1,11 +1,12 @@
 import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
+
 import StillImage from 'soapbox/components/still_image';
 
 export default class AvatarOverlay extends React.PureComponent {
 
   static propTypes = {
-    account: ImmutablePropTypes.map.isRequired,
+    account: ImmutablePropTypes.record.isRequired,
     friend: ImmutablePropTypes.map.isRequired,
   };
 

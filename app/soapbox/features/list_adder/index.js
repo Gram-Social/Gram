@@ -1,18 +1,20 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
-import { connect } from 'react-redux';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
-import { setupListAdder, resetListAdder } from '../../actions/lists';
+import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
-import List from './components/list';
-import Account from './components/account';
-import IconButton from 'soapbox/components/icon_button';
-import NewListForm from '../lists/components/new_list_form';
-import ColumnSubheading from '../ui/components/column_subheading';
-// hack
 
+import { setupListAdder, resetListAdder } from 'soapbox/actions/lists';
+import { CardHeader, CardTitle, Modal } from 'soapbox/components/ui';
+
+import NewListForm from '../lists/components/new_list_form';
+
+import Account from './components/account';
+import List from './components/list';
+
+// hack
 const getOrderedLists = createSelector([state => state.get('lists')], lists => {
   if (!lists) {
     return lists;
@@ -48,7 +50,7 @@ class ListAdder extends ImmutablePureComponent {
     onInitialize: PropTypes.func.isRequired,
     onReset: PropTypes.func.isRequired,
     listIds: ImmutablePropTypes.list.isRequired,
-    account: ImmutablePropTypes.map,
+    account: ImmutablePropTypes.record,
   };
 
   componentDidMount() {
@@ -69,13 +71,10 @@ class ListAdder extends ImmutablePureComponent {
     const { accountId, listIds, intl } = this.props;
 
     return (
-      <div className='modal-root__modal compose-modal'>
-        <div className='compose-modal__header'>
-          <h3 className='compose-modal__header__title'>
-            <FormattedMessage id='list_adder.header_title' defaultMessage='Add or Remove from Lists' />
-          </h3>
-          <IconButton className='compose-modal__close' title={intl.formatMessage(messages.close)} icon='times' onClick={this.onClickClose} size={20} />
-        </div>
+      <Modal
+        title={<FormattedMessage id='list_adder.header_title' defaultMessage='Add or Remove from Lists' />}
+        onClose={this.onClickClose}
+      >
         <div className='compose-modal__content'>
           <div className='list-adder'>
             <div className='list-adder__account'>
@@ -84,18 +83,22 @@ class ListAdder extends ImmutablePureComponent {
 
             <br />
 
-            <ColumnSubheading text={intl.formatMessage(messages.add)} />
+            <CardHeader>
+              <CardTitle title={intl.formatMessage(messages.add)} />
+            </CardHeader>
             <NewListForm />
 
             <br />
 
-            <ColumnSubheading text={intl.formatMessage(messages.subheading)} />
+            <CardHeader>
+              <CardTitle title={intl.formatMessage(messages.subheading)} />
+            </CardHeader>
             <div className='list-adder__lists'>
               {listIds.map(ListId => <List key={ListId} listId={ListId} />)}
             </div>
           </div>
         </div>
-      </div>
+      </Modal>
     );
   }
 

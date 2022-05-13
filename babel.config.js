@@ -3,13 +3,15 @@ module.exports = (api) => {
 
   const envOptions = {
     debug: false,
-    loose: true,
     modules: false,
+    useBuiltIns: 'usage',
+    corejs: '3.15',
   };
 
   const config = {
     presets: [
       '@babel/react',
+      '@babel/typescript',
       ['@babel/env', envOptions],
     ],
     plugins: [
@@ -24,41 +26,42 @@ module.exports = (api) => {
   };
 
   switch (env) {
-  case 'production':
-    envOptions.debug = false;
-    config.plugins.push(...[
-      'lodash',
-      [
-        'transform-react-remove-prop-types',
-        {
-          mode: 'remove',
-          removeImport: true,
-          additionalLibraries: [
-            'react-immutable-proptypes',
-          ],
-        },
-      ],
-      '@babel/transform-react-inline-elements',
-      [
-        '@babel/transform-runtime',
-        {
-          helpers: true,
-          regenerator: false,
-          useESModules: true,
-        },
-      ],
-    ]);
-    break;
-  case 'development':
-    envOptions.debug = true;
-    config.plugins.push(...[
-      '@babel/transform-react-jsx-source',
-      '@babel/transform-react-jsx-self',
-    ]);
-    break;
-  case 'test':
-    envOptions.modules = 'commonjs';
-    break;
+    case 'production':
+      config.plugins.push(...[
+        'lodash',
+        [
+          'transform-react-remove-prop-types',
+          {
+            mode: 'remove',
+            removeImport: true,
+            additionalLibraries: [
+              'react-immutable-proptypes',
+            ],
+          },
+        ],
+        '@babel/transform-react-inline-elements',
+        [
+          '@babel/transform-runtime',
+          {
+            helpers: true,
+            regenerator: false,
+            useESModules: true,
+          },
+        ],
+      ]);
+      break;
+    case 'development':
+      config.plugins.push(...[
+        '@babel/transform-react-jsx-source',
+        '@babel/transform-react-jsx-self',
+      ]);
+      break;
+    case 'test':
+      config.plugins.push(...[
+        'transform-require-context',
+      ]);
+      envOptions.modules = 'commonjs';
+      break;
   }
 
   return config;

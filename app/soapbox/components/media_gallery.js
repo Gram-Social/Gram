@@ -1,25 +1,29 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import ImmutablePropTypes from 'react-immutable-proptypes';
-import PropTypes from 'prop-types';
-import { is } from 'immutable';
-import IconButton from './icon_button';
-import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
-import { isIOS } from '../is_mobile';
-import { truncateFilename } from 'soapbox/utils/media';
 import classNames from 'classnames';
-import { isPanoramic, isPortrait, isNonConformingRatio, minimumAspectRatio, maximumAspectRatio } from '../utils/media_aspect_ratio';
+import { is } from 'immutable';
 import { Map as ImmutableMap } from 'immutable';
+import PropTypes from 'prop-types';
+import React from 'react';
+import ImmutablePropTypes from 'react-immutable-proptypes';
+import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
+import { connect } from 'react-redux';
+
 import { getSettings } from 'soapbox/actions/settings';
+import Blurhash from 'soapbox/components/blurhash';
 import Icon from 'soapbox/components/icon';
 import StillImage from 'soapbox/components/still_image';
-import Blurhash from 'soapbox/components/blurhash';
+import { MIMETYPE_ICONS } from 'soapbox/features/compose/components/upload';
+import { truncateFilename } from 'soapbox/utils/media';
+
+import { isIOS } from '../is_mobile';
+import { isPanoramic, isPortrait, isNonConformingRatio, minimumAspectRatio, maximumAspectRatio } from '../utils/media_aspect_ratio';
+
+import { Button, Text } from './ui';
 
 const ATTACHMENT_LIMIT = 4;
 const MAX_FILENAME_LENGTH = 45;
 
 const messages = defineMessages({
-  toggle_visible: { id: 'media_gallery.toggle_visible', defaultMessage: 'Toggle visibility' },
+  toggle_visible: { id: 'media_gallery.toggle_visible', defaultMessage: 'Hide' },
 });
 
 const mapStateToItemProps = state => ({
@@ -41,7 +45,7 @@ const shouldLetterbox = attachment => {
 class Item extends React.PureComponent {
 
   static propTypes = {
-    attachment: ImmutablePropTypes.map.isRequired,
+    attachment: ImmutablePropTypes.record.isRequired,
     standalone: PropTypes.bool,
     index: PropTypes.number.isRequired,
     size: PropTypes.number.isRequired,
@@ -143,18 +147,23 @@ class Item extends React.PureComponent {
 
     if (attachment.get('type') === 'unknown') {
       const filename = truncateFilename(attachment.get('remote_url'), MAX_FILENAME_LENGTH);
+      const attachmentIcon = (
+        <Icon
+          className='h-16 w-16 text-gray-800 dark:text-gray-200'
+          src={MIMETYPE_ICONS[attachment.getIn(['pleroma', 'mime_type'])] || require('@tabler/icons/icons/paperclip.svg')}
+        />
+      );
+
       return (
         <div className={classNames('media-gallery__item', { standalone })} key={attachment.get('id')} style={{ position, float, left, top, right, bottom, height, width: `${width}%` }}>
           <a className='media-gallery__item-thumbnail' href={attachment.get('remote_url')} target='_blank' style={{ cursor: 'pointer' }}>
             <Blurhash hash={attachment.get('blurhash')} className='media-gallery__preview' />
-            <span className='media-gallery__item__icons'><Icon id='file' /></span>
+            <span className='media-gallery__item__icons'>{attachmentIcon}</span>
             <span className='media-gallery__filename__label'>{filename}</span>
           </a>
         </div>
       );
     } else if (attachment.get('type') === 'image') {
-      const previewUrl = attachment.get('preview_url');
-
       const originalUrl = attachment.get('url');
       const letterboxed = shouldLetterbox(attachment);
 
@@ -165,11 +174,11 @@ class Item extends React.PureComponent {
           onClick={this.handleClick}
           target='_blank'
         >
-          <StillImage src={previewUrl} alt={attachment.get('description')} />
+          <StillImage src={originalUrl} alt={attachment.get('description')} />
         </a>
       );
     } else if (attachment.get('type') === 'gifv') {
-      let conditionalAttributes = {};
+      const conditionalAttributes = {};
       if (isIOS()) {
         conditionalAttributes.playsInline = '1';
       }
@@ -197,21 +206,18 @@ class Item extends React.PureComponent {
         </div>
       );
     } else if (attachment.get('type') === 'audio') {
-      const remoteURL = attachment.get('remote_url');
-      const originalUrl = attachment.get('url');
-      const fileExtensionLastIndex = remoteURL.lastIndexOf('.');
-      const fileExtension = remoteURL.substr(fileExtensionLastIndex + 1).toUpperCase();
+      const ext = attachment.get('url').split('.').pop().toUpperCase();
       thumbnail = (
         <a
           className={classNames('media-gallery__item-thumbnail')}
-          href={attachment.get('remote_url') || originalUrl}
+          href={attachment.get('url')}
           onClick={this.handleClick}
           target='_blank'
           alt={attachment.get('description')}
           title={attachment.get('description')}
         >
           <span className='media-gallery__item__icons'><Icon id='volume-up' /></span>
-          <span className='media-gallery__file-extension__label'>{fileExtension}</span>
+          <span className='media-gallery__file-extension__label'>{ext}</span>
         </a>
       );
     } else if (attachment.get('type') === 'video') {
@@ -279,6 +285,7 @@ class MediaGallery extends React.PureComponent {
     visible: PropTypes.bool,
     onToggleVisibility: PropTypes.func,
     displayMedia: PropTypes.string,
+    compact: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -299,7 +306,9 @@ class MediaGallery extends React.PureComponent {
     }
   }
 
-  handleOpen = () => {
+  handleOpen = (e) => {
+    e.stopPropagation();
+
     if (this.props.onToggleVisibility) {
       this.props.onToggleVisibility();
     } else {
@@ -328,7 +337,7 @@ class MediaGallery extends React.PureComponent {
     const aspectRatio = media.getIn([0, 'meta', 'original', 'aspect']);
 
     const getHeight = () => {
-      if (!aspectRatio) return width*9/16;
+      if (!aspectRatio) return width * 9 / 16;
       if (isPanoramic(aspectRatio)) return Math.floor(width / maximumAspectRatio);
       if (isPortrait(aspectRatio))  return Math.floor(width / minimumAspectRatio);
       return Math.floor(width / aspectRatio);
@@ -560,12 +569,11 @@ class MediaGallery extends React.PureComponent {
   }
 
   render() {
-    const { media, intl, sensitive } = this.props;
+    const { media, intl, sensitive, compact } = this.props;
     const { visible } = this.state;
     const sizeData = this.getSizeData(media.size);
-    let children, spoilerButton;
 
-    children = media.take(ATTACHMENT_LIMIT).map((attachment, i) => (
+    const children = media.take(ATTACHMENT_LIMIT).map((attachment, i) => (
       <Item
         key={attachment.get('id')}
         onClick={this.handleClick}
@@ -580,20 +588,43 @@ class MediaGallery extends React.PureComponent {
       />
     ));
 
-    if (visible) {
-      spoilerButton = <IconButton title={intl.formatMessage(messages.toggle_visible)} icon='eye-slash' overlay onClick={this.handleOpen} />;
+    let warning;
+
+    if (sensitive) {
+      warning = <FormattedMessage id='status.sensitive_warning' defaultMessage='Sensitive content' />;
     } else {
-      spoilerButton = (
-        <button type='button' onClick={this.handleOpen} className='spoiler-button__overlay'>
-          <span className='spoiler-button__overlay__label'>{sensitive ? <FormattedMessage id='status.sensitive_warning' defaultMessage='Sensitive content' /> : <FormattedMessage id='status.media_hidden' defaultMessage='Media hidden' />}</span>
-        </button>
-      );
+      warning = <FormattedMessage id='status.media_hidden' defaultMessage='Media hidden' />;
     }
 
     return (
-      <div className='media-gallery' style={sizeData.get('style')} ref={this.handleRef}>
-        <div className={classNames('spoiler-button', { 'spoiler-button--minified': visible })}>
-          {spoilerButton}
+      <div className={classNames('media-gallery', { 'media-gallery--compact': compact })} style={sizeData.get('style')} ref={this.handleRef}>
+        <div className={classNames('spoiler-button', { 'spoiler-button--minified': visible || compact })}>
+          {sensitive && (
+            (visible || compact) ? (
+              <Button
+                text={intl.formatMessage(messages.toggle_visible)}
+                icon={visible ? require('@tabler/icons/icons/eye-off.svg') : require('@tabler/icons/icons/eye.svg')}
+                onClick={this.handleOpen}
+                theme='transparent'
+                size='sm'
+              />
+            ) : (
+              <button type='button' onClick={this.handleOpen} className='bg-transparent w-full h-full border-0'>
+                <div className='p-4 rounded-xl shadow-xl backdrop-blur-sm bg-white/75 dark:bg-slate-800/75 text-center inline-block space-y-4 max-w-[280px]'>
+                  <div className='space-y-1'>
+                    <Text weight='semibold'>{warning}</Text>
+                    <Text size='sm'>
+                      {intl.formatMessage({ id: 'status.sensitive_warning.subtitle', defaultMessage: 'This content may not be suitable for all audiences.' })}
+                    </Text>
+                  </div>
+
+                  <Button type='button' theme='primary' size='sm' icon={require('@tabler/icons/icons/eye.svg')}>
+                    {intl.formatMessage({ id: 'status.sensitive_warning.action', defaultMessage: 'Show content' })}
+                  </Button>
+                </div>
+              </button>
+            )
+          )}
         </div>
 
         {children}

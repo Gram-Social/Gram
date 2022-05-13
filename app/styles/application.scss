@@ -1,9 +1,11 @@
 // Fonts from elsewhere
-@import '~fork-awesome/css/fork-awesome.css';
-@import '~fontsource-roboto/300.css';
-@import '~fontsource-roboto/400.css';
-@import '~fontsource-roboto/700.css';
-@import '~fontsource-montserrat/800.css';
+@import '~line-awesome/dist/font-awesome-line-awesome/css/all.css';
+@import '~@fontsource/inter/200.css';
+@import '~@fontsource/inter/300.css';
+@import '~@fontsource/inter/400.css';
+@import '~@fontsource/inter/500.css';
+@import '~@fontsource/inter/700.css';
+@import '~@fontsource/inter/900.css';
 
 @import 'mixins';
 @import 'themes';
@@ -13,7 +15,6 @@
 @import 'basics';
 @import 'containers';
 @import 'footer';
-@import 'forms';
 @import 'accounts';
 @import 'boost';
 @import 'loading';
@@ -28,6 +29,9 @@
 @import 'dyslexic';
 @import 'demetricator';
 @import 'chats';
+@import 'navigation';
+@import 'placeholder';
+@import 'autosuggest';
 
 // COMPONENTS
 @import 'components/buttons';
@@ -38,15 +42,12 @@
 @import 'components/account-header';
 @import 'components/user-panel';
 @import 'components/compose-form';
-// @import 'components/group-card';
-// @import 'components/group-detail';
-// @import 'components/group-form';
-// @import 'components/group-sidebar-panel';
 @import 'components/sidebar-menu';
 @import 'components/hotkeys-modal';
 @import 'components/emoji-reacts';
 @import 'components/status';
 @import 'components/reply-indicator';
+@import 'components/reply-mentions';
 @import 'components/detailed-status';
 @import 'components/list-forms';
 @import 'components/media-gallery';
@@ -57,10 +58,7 @@
 @import 'components/react-toggle';
 @import 'components/getting-started';
 @import 'components/promo-panel';
-@import 'components/drawer';
 @import 'components/still-image';
-@import 'components/timeline-queue-header';
-@import 'components/badge';
 @import 'components/theme-toggle';
 @import 'components/trends';
 @import 'components/wtf-panel';
@@ -81,7 +79,32 @@
 @import 'components/admin';
 @import 'components/backups';
 @import 'components/crypto-donate';
-@import 'components/datepicker';
+@import 'components/remote-timeline';
+@import 'components/federation-restrictions';
+@import 'components/aliases';
+@import 'components/icon';
+@import 'components/profile-stats';
+@import 'components/progress-circle';
+@import 'components/register-invite';
+@import 'components/radio-button';
+@import 'components/directory';
 
 // Holiday
 @import 'holiday/halloween';
+
+// Truth custom styles
+@import 'truth';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .shadow-inset {
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  }
+}
+
+@import 'forms';
+@import 'utilities';
+@import 'components/datepicker';

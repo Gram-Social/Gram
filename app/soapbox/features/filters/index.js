@@ -1,22 +1,19 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
-import ImmutablePureComponent from 'react-immutable-pure-component';
 import PropTypes from 'prop-types';
-import Column from '../ui/components/column';
-import { fetchFilters, createFilter, deleteFilter } from '../../actions/filters';
-import ScrollableList from '../../components/scrollable_list';
-import Button from 'soapbox/components/button';
-import {
-  SimpleForm,
-  SimpleInput,
-  FieldsGroup,
-  SelectDropdown,
-  Checkbox,
-} from 'soapbox/features/forms';
+import React from 'react';
+import ImmutablePureComponent from 'react-immutable-pure-component';
+import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
+import { connect } from 'react-redux';
+
+import { fetchFilters, createFilter, deleteFilter } from 'soapbox/actions/filters';
 import snackbar from 'soapbox/actions/snackbar';
 import Icon from 'soapbox/components/icon';
-import ColumnSubheading from '../ui/components/column_subheading';
+import ScrollableList from 'soapbox/components/scrollable_list';
+import { Button } from 'soapbox/components/ui';
+import { CardHeader, CardTitle, Column, Form, FormActions, FormGroup, Input, Text } from 'soapbox/components/ui';
+import {
+  FieldsGroup,
+  Checkbox,
+} from 'soapbox/features/forms';
 
 const messages = defineMessages({
   heading: { id: 'column.filters', defaultMessage: 'Muted words' },
@@ -39,14 +36,14 @@ const messages = defineMessages({
   delete: { id: 'column.filters.delete', defaultMessage: 'Delete' },
 });
 
-const expirations = {
-  null: 'Never',
-  // 3600: '30 minutes',
-  // 21600: '1 hour',
-  // 43200: '12 hours',
-  // 86400 : '1 day',
-  // 604800: '1 week',
-};
+// const expirations = {
+//   null: 'Never',
+//   // 3600: '30 minutes',
+//   // 21600: '1 hour',
+//   // 43200: '12 hours',
+//   // 86400 : '1 day',
+//   // 604800: '1 week',
+// };
 
 const mapStateToProps = state => ({
   filters: state.get('filters'),
@@ -96,20 +93,20 @@ class Filters extends ImmutablePureComponent {
     const { intl, dispatch } = this.props;
     const { phrase, whole_word, expires_at, irreversible } = this.state;
     const { home_timeline, public_timeline, notifications, conversations } = this.state;
-    let context = [];
+    const context = [];
 
     if (home_timeline) {
       context.push('home');
-    };
+    }
     if (public_timeline) {
       context.push('public');
-    };
+    }
     if (notifications) {
       context.push('notifications');
-    };
+    }
     if (conversations) {
       context.push('thread');
-    };
+    }
 
     dispatch(createFilter(intl, phrase, expires_at, context, whole_word, irreversible)).then(response => {
       return dispatch(fetchFilters());
@@ -133,136 +130,128 @@ class Filters extends ImmutablePureComponent {
     const emptyMessage = <FormattedMessage id='empty_column.filters' defaultMessage="You haven't created any muted words yet." />;
 
     return (
-      <Column className='filter-settings-panel' icon='filter' heading={intl.formatMessage(messages.heading)} backBtnSlim>
-        <ColumnSubheading text={intl.formatMessage(messages.subheading_add_new)} />
-        <SimpleForm>
-          <div className='filter-settings-panel'>
-            <fieldset disabled={false}>
-              <FieldsGroup>
-                <div className='two-col'>
-                  <SimpleInput
-                    label={intl.formatMessage(messages.keyword)}
-                    required
-                    type='text'
-                    name='phrase'
-                    onChange={this.handleInputChange}
-                  />
-                  <div className='input with_label required'>
-                    <SelectDropdown
-                      label={intl.formatMessage(messages.expires)}
-                      hint={intl.formatMessage(messages.expires_hint)}
-                      items={expirations}
-                      defaultValue={expirations.never}
-                      onChange={this.handleSelectChange}
-                    />
-                  </div>
+      <Column className='filter-settings-panel' icon='filter' label={intl.formatMessage(messages.heading)}>
+        <CardHeader>
+          <CardTitle title={intl.formatMessage(messages.subheading_add_new)} />
+        </CardHeader>
+        <Form onSubmit={this.handleAddNew}>
+          <FormGroup labelText={intl.formatMessage(messages.keyword)}>
+            <Input
+              required
+              type='text'
+              name='phrase'
+              onChange={this.handleInputChange}
+            />
+          </FormGroup>
+          {/* <FormGroup labelText={intl.formatMessage(messages.expires)} hintText={intl.formatMessage(messages.expires_hint)}>
+            <SelectDropdown
+              items={expirations}
+              defaultValue={expirations.never}
+              onChange={this.handleSelectChange}
+            />
+          </FormGroup> */}
+
+          <FieldsGroup>
+            <Text tag='label'>
+              <FormattedMessage id='filters.context_header' defaultMessage='Filter contexts' />
+            </Text>
+            <Text theme='muted' size='xs'>
+              <FormattedMessage id='filters.context_hint' defaultMessage='One or multiple contexts where the filter should apply' />
+            </Text>
+            <div className='two-col'>
+              <Checkbox
+                label={intl.formatMessage(messages.home_timeline)}
+                name='home_timeline'
+                checked={this.state.home_timeline}
+                onChange={this.handleCheckboxChange}
+              />
+              <Checkbox
+                label={intl.formatMessage(messages.public_timeline)}
+                name='public_timeline'
+                checked={this.state.public_timeline}
+                onChange={this.handleCheckboxChange}
+              />
+              <Checkbox
+                label={intl.formatMessage(messages.notifications)}
+                name='notifications'
+                checked={this.state.notifications}
+                onChange={this.handleCheckboxChange}
+              />
+              <Checkbox
+                label={intl.formatMessage(messages.conversations)}
+                name='conversations'
+                checked={this.state.conversations}
+                onChange={this.handleCheckboxChange}
+              />
+            </div>
+
+          </FieldsGroup>
+
+          <FieldsGroup>
+            <Checkbox
+              label={intl.formatMessage(messages.drop_header)}
+              hint={intl.formatMessage(messages.drop_hint)}
+              name='irreversible'
+              checked={this.state.irreversible}
+              onChange={this.handleCheckboxChange}
+            />
+            <Checkbox
+              label={intl.formatMessage(messages.whole_word_header)}
+              hint={intl.formatMessage(messages.whole_word_hint)}
+              name='whole_word'
+              checked={this.state.whole_word}
+              onChange={this.handleCheckboxChange}
+            />
+          </FieldsGroup>
+
+          <FormActions>
+            <Button type='submit' theme='primary'>{intl.formatMessage(messages.add_new)}</Button>
+          </FormActions>
+        </Form>
+
+        <CardHeader>
+          <CardTitle title={intl.formatMessage(messages.subheading_filters)} />
+        </CardHeader>
+
+        <ScrollableList
+          scrollKey='filters'
+          emptyMessage={emptyMessage}
+        >
+          {filters.map((filter, i) => (
+            <div key={i} className='filter__container'>
+              <div className='filter__details'>
+                <div className='filter__phrase'>
+                  <span className='filter__list-label'><FormattedMessage id='filters.filters_list_phrase_label' defaultMessage='Keyword or phrase:' /></span>
+                  <span className='filter__list-value'>{filter.get('phrase')}</span>
                 </div>
-              </FieldsGroup>
-
-              <FieldsGroup>
-                <label className='checkboxes required'>
-                  <FormattedMessage id='filters.context_header' defaultMessage='Filter contexts' />
-                </label>
-                <span className='hint'>
-                  <FormattedMessage id='filters.context_hint' defaultMessage='One or multiple contexts where the filter should apply' />
-                </span>
-                <div className='two-col'>
-                  <Checkbox
-                    label={intl.formatMessage(messages.home_timeline)}
-                    name='home_timeline'
-                    checked={this.state.home_timeline}
-                    onChange={this.handleCheckboxChange}
-                  />
-                  <Checkbox
-                    label={intl.formatMessage(messages.public_timeline)}
-                    name='public_timeline'
-                    checked={this.state.public_timeline}
-                    onChange={this.handleCheckboxChange}
-                  />
-                  <Checkbox
-                    label={intl.formatMessage(messages.notifications)}
-                    name='notifications'
-                    checked={this.state.notifications}
-                    onChange={this.handleCheckboxChange}
-                  />
-                  <Checkbox
-                    label={intl.formatMessage(messages.conversations)}
-                    name='conversations'
-                    checked={this.state.conversations}
-                    onChange={this.handleCheckboxChange}
-                  />
+                <div className='filter__contexts'>
+                  <span className='filter__list-label'><FormattedMessage id='filters.filters_list_context_label' defaultMessage='Filter contexts:' /></span>
+                  <span className='filter__list-value'>
+                    {filter.get('context').map((context, i) => (
+                      <span key={i} className='context'>{context}</span>
+                    ))}
+                  </span>
                 </div>
-
-              </FieldsGroup>
-
-              <FieldsGroup>
-                <Checkbox
-                  label={intl.formatMessage(messages.drop_header)}
-                  hint={intl.formatMessage(messages.drop_hint)}
-                  name='irreversible'
-                  checked={this.state.irreversible}
-                  onChange={this.handleCheckboxChange}
-                />
-                <Checkbox
-                  label={intl.formatMessage(messages.whole_word_header)}
-                  hint={intl.formatMessage(messages.whole_word_hint)}
-                  name='whole_word'
-                  checked={this.state.whole_word}
-                  onChange={this.handleCheckboxChange}
-                />
-              </FieldsGroup>
-            </fieldset>
-
-            <Button className='button button-primary setup' text={intl.formatMessage(messages.add_new)} onClick={this.handleAddNew} />
-
-            <ColumnSubheading text={intl.formatMessage(messages.subheading_filters)} />
-
-            <ScrollableList
-              scrollKey='filters'
-              emptyMessage={emptyMessage}
-            >
-              {filters.map((filter, i) => (
-                <div key={i} className='filter__container'>
-                  <div className='filter__details'>
-                    <div className='filter__phrase'>
-                      <span className='filter__list-label'><FormattedMessage id='filters.filters_list_phrase_label' defaultMessage='Keyword or phrase:' /></span>
-                      <span className='filter__list-value'>{filter.get('phrase')}</span>
-                    </div>
-                    <div className='filter__contexts'>
-                      <span className='filter__list-label'><FormattedMessage id='filters.filters_list_context_label' defaultMessage='Filter contexts:' /></span>
-                      <span className='filter__list-value'>
-                        {filter.get('context').map((context, i) => (
-                          <span key={i} className='context'>{context}</span>
-                        ))}
-                      </span>
-                    </div>
-                    <div className='filter__details'>
-                      <span className='filter__list-label'><FormattedMessage id='filters.filters_list_details_label' defaultMessage='Filter settings:' /></span>
-                      <span className='filter__list-value'>
-                        {filter.get('irreversible') ?
-                          <span><FormattedMessage id='filters.filters_list_drop' defaultMessage='Drop' /></span> :
-                          <span><FormattedMessage id='filters.filters_list_hide' defaultMessage='Hide' /></span>
-                        }
-                        {filter.get('whole_word') &&
-                          <span><FormattedMessage id='filters.filters_list_whole-word' defaultMessage='Whole word' /></span>
-                        }
-                      </span>
-                    </div>
-                  </div>
-                  <div className='filter__delete' role='button' tabIndex='0' onClick={this.handleFilterDelete} data-value={filter.get('id')} aria-label={intl.formatMessage(messages.delete)}>
-                    <Icon className='filter__delete-icon' id='times' size={40} />
-                    <span className='filter__delete-label'><FormattedMessage id='filters.filters_list_delete' defaultMessage='Delete' /></span>
-                  </div>
+                <div className='filter__details'>
+                  <span className='filter__list-label'><FormattedMessage id='filters.filters_list_details_label' defaultMessage='Filter settings:' /></span>
+                  <span className='filter__list-value'>
+                    {filter.get('irreversible') ?
+                      <span><FormattedMessage id='filters.filters_list_drop' defaultMessage='Drop' /></span> :
+                      <span><FormattedMessage id='filters.filters_list_hide' defaultMessage='Hide' /></span>
+                    }
+                    {filter.get('whole_word') &&
+                      <span><FormattedMessage id='filters.filters_list_whole-word' defaultMessage='Whole word' /></span>
+                    }
+                  </span>
                 </div>
-              ))}
-            </ScrollableList>
-
-          </div>
-        </SimpleForm>
-
-
-
-
+              </div>
+              <div className='filter__delete' role='button' tabIndex='0' onClick={this.handleFilterDelete} data-value={filter.get('id')} aria-label={intl.formatMessage(messages.delete)}>
+                <Icon className='filter__delete-icon' id='times' size={40} />
+                <span className='filter__delete-label'><FormattedMessage id='filters.filters_list_delete' defaultMessage='Delete' /></span>
+              </div>
+            </div>
+          ))}
+        </ScrollableList>
       </Column>
     );
   }

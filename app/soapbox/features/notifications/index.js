@@ -1,30 +1,42 @@
-import React from 'react';
-import { connect } from 'react-redux';
+import { List as ImmutableList } from 'immutable';
+import { debounce } from 'lodash';
 import PropTypes from 'prop-types';
+import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
-import Column from '../../components/column';
-import ColumnHeader from '../../components/column_header';
+import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
+import { connect } from 'react-redux';
+import { Virtuoso } from 'react-virtuoso';
+import { createSelector } from 'reselect';
+
+import { getSettings } from 'soapbox/actions/settings';
+import PullToRefresh from 'soapbox/components/pull-to-refresh';
+import PlaceholderNotification from 'soapbox/features/placeholder/components/placeholder_notification';
+
 import {
   expandNotifications,
   scrollTopNotifications,
   dequeueNotifications,
 } from '../../actions/notifications';
-import NotificationContainer from './containers/notification_container';
-import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
-import ColumnSettingsContainer from './containers/column_settings_container';
-import FilterBarContainer from './containers/filter_bar_container';
-import { createSelector } from 'reselect';
-import { List as ImmutableList } from 'immutable';
-import { debounce } from 'lodash';
-import ScrollableList from '../../components/scrollable_list';
-import LoadGap from '../../components/load_gap';
 import TimelineQueueButtonHeader from  '../../components/timeline_queue_button_header';
-import { getSettings } from 'soapbox/actions/settings';
+import { Column, Text } from '../../components/ui';
+
+import FilterBarContainer from './containers/filter_bar_container';
+import NotificationContainer from './containers/notification_container';
 
 const messages = defineMessages({
   title: { id: 'column.notifications', defaultMessage: 'Notifications' },
   queue: { id: 'notifications.queue_label', defaultMessage: 'Click to see {count} new {count, plural, one {notification} other {notifications}}' },
 });
+
+const Footer = ({ context }) => (
+  context.hasMore ? (
+    <PlaceholderNotification />
+  ) : null
+);
+
+const Item = ({ context, ...rest }) => (
+  <div className='border-solid border-b border-gray-200 dark:border-slate-700' {...rest} />
+);
 
 const getNotifications = createSelector([
   state => getSettings(state).getIn(['notifications', 'quickFilter', 'show']),
@@ -41,14 +53,18 @@ const getNotifications = createSelector([
   return notifications.filter(item => item !== null && allowedType === item.get('type'));
 });
 
-const mapStateToProps = state => ({
-  showFilterBar: getSettings(state).getIn(['notifications', 'quickFilter', 'show']),
-  notifications: getNotifications(state),
-  isLoading: state.getIn(['notifications', 'isLoading'], true),
-  isUnread: state.getIn(['notifications', 'unread']) > 0,
-  hasMore: state.getIn(['notifications', 'hasMore']),
-  totalQueuedNotificationsCount: state.getIn(['notifications', 'totalQueuedNotificationsCount'], 0),
-});
+const mapStateToProps = state => {
+  const settings = getSettings(state);
+
+  return {
+    showFilterBar: settings.getIn(['notifications', 'quickFilter', 'show']),
+    notifications: getNotifications(state),
+    isLoading: state.getIn(['notifications', 'isLoading'], true),
+    isUnread: state.getIn(['notifications', 'unread']) > 0,
+    hasMore: state.getIn(['notifications', 'hasMore']),
+    totalQueuedNotificationsCount: state.getIn(['notifications', 'totalQueuedNotificationsCount'], 0),
+  };
+};
 
 export default @connect(mapStateToProps)
 @injectIntl
@@ -110,7 +126,7 @@ class Notifications extends React.PureComponent {
   }
 
   _selectChild(index, align_top) {
-    const container = this.column.node;
+    const container = this.column;
     const element = container.querySelector(`article:nth-of-type(${index + 1}) .focusable`);
 
     if (element) {
@@ -127,62 +143,56 @@ class Notifications extends React.PureComponent {
     this.props.dispatch(dequeueNotifications());
   };
 
-  render() {
-    const { intl, notifications, isLoading, isUnread, hasMore, showFilterBar, totalQueuedNotificationsCount } = this.props;
-    const emptyMessage = <FormattedMessage id='empty_column.notifications' defaultMessage="You don't have any notifications yet. Interact with others to start the conversation." />;
+  handleRefresh = () => {
+    const { dispatch } = this.props;
+    return dispatch(expandNotifications());
+  }
 
-    let scrollableContent = null;
+  render() {
+    const { intl, notifications, isLoading, hasMore, showFilterBar, totalQueuedNotificationsCount } = this.props;
+    const emptyMessage = <FormattedMessage id='empty_column.notifications' defaultMessage="You don't have any notifications yet. Interact with others to start the conversation." />;
 
     const filterBarContainer = showFilterBar
       ? (<FilterBarContainer />)
       : null;
 
-    if (isLoading && this.scrollableContent) {
-      scrollableContent = this.scrollableContent;
-    } else if (notifications.size > 0 || hasMore) {
-      scrollableContent = notifications.map((item, index) => item === null ? (
-        <LoadGap
-          key={'gap:' + notifications.getIn([index + 1, 'id'])}
-          disabled={isLoading}
-          maxId={index > 0 ? notifications.getIn([index - 1, 'id']) : null}
-          onClick={this.handleLoadGap}
-        />
-      ) : (
-        <NotificationContainer
-          key={item.get('id')}
-          notification={item}
-          accountId={item.get('account')}
-          targetId={item.get('target')}
-          onMoveUp={this.handleMoveUp}
-          onMoveDown={this.handleMoveDown}
-        />
-      ));
-    } else {
-      scrollableContent = null;
-    }
+    const showLoading = isLoading && !notifications || notifications.isEmpty();
 
-    this.scrollableContent = scrollableContent;
-
-    const scrollContainer = (
-      <ScrollableList
-        scrollKey='notifications'
-        isLoading={isLoading}
-        showLoading={isLoading && notifications.size === 0}
-        hasMore={hasMore}
-        emptyMessage={emptyMessage}
-        onLoadMore={this.handleLoadOlder}
-        onScrollToTop={this.handleScrollToTop}
-        onScroll={this.handleScroll}
-      >
-        {scrollableContent}
-      </ScrollableList>
+    const scrollContainer  = (
+      <PullToRefresh onRefresh={this.handleRefresh}>
+        <Virtuoso
+          useWindowScroll
+          data={showLoading ? Array(20).fill() : notifications.toArray()}
+          startReached={this.handleScrollToTop}
+          endReached={this.handleLoadOlder}
+          isScrolling={isScrolling => isScrolling && this.handleScroll()}
+          itemContent={(_index, notification) => (
+            showLoading ? (
+              <PlaceholderNotification />
+            ) : (
+              <NotificationContainer
+                key={notification.id}
+                notification={notification}
+                onMoveUp={this.handleMoveUp}
+                onMoveDown={this.handleMoveDown}
+              />
+            )
+          )}
+          context={{
+            hasMore,
+          }}
+          components={{
+            ScrollSeekPlaceholder: PlaceholderNotification,
+            Footer,
+            EmptyPlaceholder: () => <Text>{emptyMessage}</Text>,
+            Item,
+          }}
+        />
+      </PullToRefresh>
     );
 
     return (
-      <Column ref={this.setColumnRef} label={intl.formatMessage(messages.title)}>
-        <ColumnHeader icon='bell' active={isUnread} title={intl.formatMessage(messages.title)}>
-          <ColumnSettingsContainer />
-        </ColumnHeader>
+      <Column ref={this.setColumnRef} label={intl.formatMessage(messages.title)} withHeader={false}>
         {filterBarContainer}
         <TimelineQueueButtonHeader
           onClick={this.handleDequeueNotifications}

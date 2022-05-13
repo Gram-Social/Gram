@@ -1,5 +1,6 @@
 import api from '../api';
-import { openModal, closeModal } from './modal';
+
+import { openModal } from './modals';
 
 export const REPORT_INIT   = 'REPORT_INIT';
 export const REPORT_CANCEL = 'REPORT_CANCEL';
@@ -13,6 +14,8 @@ export const REPORT_COMMENT_CHANGE = 'REPORT_COMMENT_CHANGE';
 export const REPORT_FORWARD_CHANGE = 'REPORT_FORWARD_CHANGE';
 export const REPORT_BLOCK_CHANGE   = 'REPORT_BLOCK_CHANGE';
 
+export const REPORT_RULE_CHANGE    = 'REPORT_RULE_CHANGE';
+
 export function initReport(account, status) {
   return dispatch => {
     dispatch({
@@ -23,7 +26,7 @@ export function initReport(account, status) {
 
     dispatch(openModal('REPORT'));
   };
-};
+}
 
 export function initReportById(accountId) {
   return (dispatch, getState) => {
@@ -34,13 +37,13 @@ export function initReportById(accountId) {
 
     dispatch(openModal('REPORT'));
   };
-};
+}
 
 export function cancelReport() {
   return {
     type: REPORT_CANCEL,
   };
-};
+}
 
 export function toggleStatusReport(statusId, checked) {
   return {
@@ -48,61 +51,66 @@ export function toggleStatusReport(statusId, checked) {
     statusId,
     checked,
   };
-};
+}
 
 export function submitReport() {
   return (dispatch, getState) => {
     dispatch(submitReportRequest());
+    const { reports } = getState();
 
-    api(getState).post('/api/v1/reports', {
-      account_id: getState().getIn(['reports', 'new', 'account_id']),
-      status_ids: getState().getIn(['reports', 'new', 'status_ids']),
-      comment: getState().getIn(['reports', 'new', 'comment']),
-      forward: getState().getIn(['reports', 'new', 'forward']),
-    }).then(response => {
-      dispatch(closeModal());
-      dispatch(submitReportSuccess(response.data));
-    }).catch(error => dispatch(submitReportFail(error)));
+    return api(getState).post('/api/v1/reports', {
+      account_id: reports.getIn(['new', 'account_id']),
+      status_ids: reports.getIn(['new', 'status_ids']),
+      rule_ids: reports.getIn(['new', 'rule_ids']),
+      comment: reports.getIn(['new', 'comment']),
+      forward: reports.getIn(['new', 'forward']),
+    });
   };
-};
+}
 
 export function submitReportRequest() {
   return {
     type: REPORT_SUBMIT_REQUEST,
   };
-};
+}
 
-export function submitReportSuccess(report) {
+export function submitReportSuccess() {
   return {
     type: REPORT_SUBMIT_SUCCESS,
-    report,
   };
-};
+}
 
 export function submitReportFail(error) {
   return {
     type: REPORT_SUBMIT_FAIL,
     error,
   };
-};
+}
 
 export function changeReportComment(comment) {
   return {
     type: REPORT_COMMENT_CHANGE,
     comment,
   };
-};
+}
 
 export function changeReportForward(forward) {
   return {
     type: REPORT_FORWARD_CHANGE,
     forward,
   };
-};
+}
 
 export function changeReportBlock(block) {
   return {
     type: REPORT_BLOCK_CHANGE,
     block,
   };
-};
+}
+
+export function changeReportRule(ruleId) {
+  return {
+    type: REPORT_RULE_CHANGE,
+    rule_id: ruleId,
+  };
+}

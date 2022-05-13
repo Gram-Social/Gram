@@ -10,7 +10,7 @@
 .status__display-name,
 .account__display-name {
   strong {
-    color: var(--primary-text-color);
+    @apply text-gray-800 dark:text-gray-200;
   }
 }
 
@@ -42,6 +42,10 @@ a.account__display-name {
   text-overflow: ellipsis;
   white-space: nowrap;
   position: relative;
+
+  bdi {
+    min-width: 0;
+  }
 }
 
 .display-name__html {

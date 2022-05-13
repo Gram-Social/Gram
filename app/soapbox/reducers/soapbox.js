@@ -1,11 +1,15 @@
+import { Map as ImmutableMap, fromJS } from 'immutable';
+
+import { PLEROMA_PRELOAD_IMPORT } from 'soapbox/actions/preload';
+import KVStore from 'soapbox/storage/kv_store';
+import { ConfigDB } from 'soapbox/utils/config_db';
+
 import { ADMIN_CONFIG_UPDATE_SUCCESS } from '../actions/admin';
 import {
+  SOAPBOX_CONFIG_REMEMBER_SUCCESS,
   SOAPBOX_CONFIG_REQUEST_SUCCESS,
   SOAPBOX_CONFIG_REQUEST_FAIL,
 } from '../actions/soapbox';
-import { PRELOAD_IMPORT } from 'soapbox/actions/preload';
-import { Map as ImmutableMap, fromJS } from 'immutable';
-import { ConfigDB } from 'soapbox/utils/config_db';
 
 const initialState = ImmutableMap();
 
@@ -36,17 +40,30 @@ const preloadImport = (state, action) => {
   }
 };
 
-export default function soapbox(state = initialState, action) {
-  switch(action.type) {
-  case PRELOAD_IMPORT:
-    return preloadImport(state, action);
-  case SOAPBOX_CONFIG_REQUEST_SUCCESS:
-    return fromJS(action.soapboxConfig);
-  case SOAPBOX_CONFIG_REQUEST_FAIL:
-    return fallbackState.mergeDeep(state);
-  case ADMIN_CONFIG_UPDATE_SUCCESS:
-    return updateFromAdmin(state, fromJS(action.configs));
-  default:
-    return state;
+const persistSoapboxConfig = (soapboxConfig, host) => {
+  if (host) {
+    KVStore.setItem(`soapbox_config:${host}`, soapboxConfig.toJS()).catch(console.error);
   }
 };
+
+const importSoapboxConfig = (state, soapboxConfig, host) => {
+  persistSoapboxConfig(soapboxConfig, host);
+  return soapboxConfig;
+};
+
+export default function soapbox(state = initialState, action) {
+  switch (action.type) {
+    case PLEROMA_PRELOAD_IMPORT:
+      return preloadImport(state, action);
+    case SOAPBOX_CONFIG_REMEMBER_SUCCESS:
+      return fromJS(action.soapboxConfig);
+    case SOAPBOX_CONFIG_REQUEST_SUCCESS:
+      return importSoapboxConfig(state, fromJS(action.soapboxConfig), action.host);
+    case SOAPBOX_CONFIG_REQUEST_FAIL:
+      return fallbackState.mergeDeep(state);
+    case ADMIN_CONFIG_UPDATE_SUCCESS:
+      return updateFromAdmin(state, fromJS(action.configs));
+    default:
+      return state;
+  }
+}

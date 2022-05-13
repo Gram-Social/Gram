@@ -1,20 +1,37 @@
 import { connect } from 'react-redux';
-import { closeModal } from '../../../actions/modal';
+
+import { cancelReport } from 'soapbox/actions/reports';
+
 import { cancelReplyCompose } from '../../../actions/compose';
+import { closeModal } from '../../../actions/modals';
 import ModalRoot from '../components/modal_root';
 
-const mapStateToProps = state => ({
-  type: state.get('modal').modalType,
-  props: state.get('modal').modalProps,
-});
+const mapStateToProps = state => {
+  const modal = state.get('modals').last({
+    modalType: null,
+    modalProps: {},
+  });
+
+  return {
+    type: modal.modalType,
+    props: modal.modalProps,
+  };
+};
 
 const mapDispatchToProps = (dispatch) => ({
-  onClose(optionalType) {
-    if (optionalType === 'COMPOSE') {
-      dispatch(cancelReplyCompose());
+  onClose(type) {
+    switch (type) {
+      case 'COMPOSE':
+        dispatch(cancelReplyCompose());
+        break;
+      case 'REPORT':
+        dispatch(cancelReport());
+        break;
+      default:
+        break;
     }
 
-    dispatch(closeModal());
+    dispatch(closeModal(type));
   },
 });
 

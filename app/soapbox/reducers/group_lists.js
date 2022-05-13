@@ -1,4 +1,5 @@
 import { Map as ImmutableMap, List as ImmutableList } from 'immutable';
+
 import { GROUPS_FETCH_SUCCESS } from '../actions/groups';
 
 const initialState = ImmutableMap({
@@ -12,10 +13,10 @@ const normalizeList = (state, type, id, groups) => {
 };
 
 export default function groupLists(state = initialState, action) {
-  switch(action.type) {
-  case GROUPS_FETCH_SUCCESS:
-    return normalizeList(state, action.tab, action.id, action.groups);
-  default:
-    return state;
+  switch (action.type) {
+    case GROUPS_FETCH_SUCCESS:
+      return normalizeList(state, action.tab, action.id, action.groups);
+    default:
+      return state;
   }
-};
+}

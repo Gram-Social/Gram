@@ -1,81 +1,83 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import ImmutablePropTypes from 'react-immutable-proptypes';
-import ImmutablePureComponent from 'react-immutable-pure-component';
-import StatusContent from '../../../components/status_content';
-import Avatar from '../../../components/avatar';
-import RelativeTimestamp from '../../../components/relative_timestamp';
-import DisplayName from '../../../components/display_name';
-import IconButton from '../../../components/icon_button';
 import classNames from 'classnames';
+import PropTypes from 'prop-types';
+import React from 'react';
+import ImmutablePropTypes from 'react-immutable-proptypes';
+import { FormattedMessage } from 'react-intl';
+import spring from 'react-motion/lib/spring';
 
-export default class ActionsModal extends ImmutablePureComponent {
+import Icon from '../../../components/icon';
+import StatusContent from '../../../components/status_content';
+import { Stack } from '../../../components/ui';
+import AccountContainer from '../../../containers/account_container';
+import Motion from '../util/optional_motion';
 
-  static propTypes = {
-    status: ImmutablePropTypes.map,
-    actions: PropTypes.array,
-    onClick: PropTypes.func,
-  };
-
-  renderAction = (action, i) => {
+const ActionsModal = ({ status, actions, onClick, onClose }) => {
+  const renderAction = (action, i) => {
     if (action === null) {
       return <li key={`sep-${i}`} className='dropdown-menu__separator' />;
     }
 
-    const { icon = null, text, meta = null, active = false, href = '#', isLogout } = action;
+    const { icon = null, text, meta = null, active = false, href = '#', isLogout, destructive } = action;
+
+    const Comp = href === '#' ? 'button' : 'a';
+    const compProps = href === '#' ? { onClick: onClick } : { href: href };
 
     return (
       <li key={`${text}-${i}`}>
-        <a
-          href={href}
+        <Comp
+          {...compProps}
           rel='noopener'
-          onClick={this.props.onClick}
           data-index={i}
-          className={classNames({ active })}
+          className={classNames({ active, destructive })}
           data-method={isLogout ? 'delete' : null}
         >
-          {icon && <IconButton title={text} icon={icon} role='presentation' tabIndex='-1' inverted />}
+          {icon && <Icon title={text} src={icon} role='presentation' tabIndex='-1' inverted />}
           <div>
             <div className={classNames({ 'actions-modal__item-label': !!meta })}>{text}</div>
             <div>{meta}</div>
           </div>
-        </a>
+        </Comp>
       </li>
     );
-  }
+  };
 
-  render() {
-    const status = this.props.status && (
-      <div className='status light'>
-        <div className='boost-modal__status-header'>
-          <div className='boost-modal__status-time'>
-            <a href={this.props.status.get('url')} className='status__relative-time' target='_blank' rel='noopener'>
-              <RelativeTimestamp timestamp={this.props.status.get('created_at')} />
-            </a>
-          </div>
+  return (
+    <Motion defaultStyle={{ top: 100 }} style={{ top: spring(0) }}>
+      {({ top }) => (
+        <div className='modal-root__modal actions-modal' style={{ top: `${top}%` }}>
+          {status && (
+            <Stack space={2} className='p-4 bg-gray-50 dark:bg-slate-800 border-b border-solid border-gray-200 dark:border-gray-700'>
+              <AccountContainer
+                account={status.get('account')}
+                showProfileHoverCard={false}
+                timestamp={status.get('created_at')}
+              />
+              <StatusContent status={status} />
+            </Stack>
+          )}
 
-          <a href={`/@${this.props.status.getIn(['account', 'acct'])}`} className='status__display-name'>
-            <div className='status__avatar'>
-              <Avatar account={this.props.status.get('account')} size={48} />
-            </div>
+          <ul className={classNames({ 'with-status': !!status })}>
+            {actions && actions.map(renderAction)}
 
-            <DisplayName account={this.props.status.get('account')} />
-          </a>
+            <li className='dropdown-menu__separator' />
+
+            <li>
+              <button type='button' onClick={onClose}>
+                <FormattedMessage id='lightbox.close' defaultMessage='Cancel' />
+              </button>
+            </li>
+          </ul>
         </div>
+      )}
+    </Motion>
+  );
+};
 
-        <StatusContent status={this.props.status} />
-      </div>
-    );
+ActionsModal.propTypes = {
+  status: ImmutablePropTypes.record,
+  actions: PropTypes.array,
+  onClick: PropTypes.func,
+  onClose: PropTypes.func.isRequired,
+};
 
-    return (
-      <div className='modal-root__modal actions-modal'>
-        {status}
-
-        <ul className={classNames({ 'with-status': !!status })}>
-          {this.props.actions.map(this.renderAction)}
-        </ul>
-      </div>
-    );
-  }
-
-}
+export default ActionsModal;

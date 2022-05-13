@@ -1,41 +1,44 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import ImmutablePropTypes from 'react-immutable-proptypes';
 import PropTypes from 'prop-types';
+import React from 'react';
+import ImmutablePropTypes from 'react-immutable-proptypes';
+import ImmutablePureComponent from 'react-immutable-pure-component';
+import { FormattedMessage } from 'react-intl';
+import { connect } from 'react-redux';
+
 import {
   fetchAccount,
   fetchAccountByUsername,
 } from 'soapbox/actions/accounts';
-import { expandAccountMediaTimeline } from '../../actions/timelines';
-import LoadingIndicator from 'soapbox/components/loading_indicator';
-import Column from '../ui/components/column';
-import ImmutablePureComponent from 'react-immutable-pure-component';
-import { getAccountGallery } from 'soapbox/selectors';
-import MediaItem from './components/media_item';
+import { openModal } from 'soapbox/actions/modals';
 import LoadMore from 'soapbox/components/load_more';
 import MissingIndicator from 'soapbox/components/missing_indicator';
-import { openModal } from 'soapbox/actions/modal';
-import { NavLink } from 'react-router-dom';
-import { FormattedMessage } from 'react-intl';
+import { Column } from 'soapbox/components/ui';
+import { Spinner } from 'soapbox/components/ui';
+import { getAccountGallery, findAccountByUsername } from 'soapbox/selectors';
+import { getFeatures } from 'soapbox/utils/features';
+
+import { expandAccountMediaTimeline } from '../../actions/timelines';
+
+import MediaItem from './components/media_item';
 
 const mapStateToProps = (state, { params, withReplies = false }) => {
   const username = params.username || '';
   const me = state.get('me');
-  const accounts = state.getIn(['accounts']);
-  const accountFetchError = (state.getIn(['accounts', -1, 'username'], '').toLowerCase() === username.toLowerCase());
+  const accountFetchError = ((state.getIn(['accounts', -1, 'username']) || '').toLowerCase() === username.toLowerCase());
+  const features = getFeatures(state.get('instance'));
 
   let accountId = -1;
   let accountUsername = username;
   if (accountFetchError) {
     accountId = null;
   } else {
-    let account = accounts.find(acct => username.toLowerCase() === acct.getIn(['acct'], '').toLowerCase());
+    const account = findAccountByUsername(state, username);
     accountId = account ? account.getIn(['id'], null) : -1;
     accountUsername = account ? account.getIn(['acct'], '') : '';
   }
 
   const isBlocked = state.getIn(['relationships', accountId, 'blocked_by'], false);
-  const unavailable = (me === accountId) ? false : isBlocked;
+  const unavailable = (me === accountId) ? false : (isBlocked && !features.blockersVisible);
 
   return {
     accountId,
@@ -155,16 +158,14 @@ class AccountGallery extends ImmutablePureComponent {
 
     if (!isAccount && accountId !== -1) {
       return (
-        <Column>
-          <MissingIndicator />
-        </Column>
+        <MissingIndicator />
       );
     }
 
     if (accountId === -1 || (!attachments && isLoading)) {
       return (
         <Column>
-          <LoadingIndicator />
+          <Spinner />
         </Column>
       );
     }
@@ -186,50 +187,34 @@ class AccountGallery extends ImmutablePureComponent {
     }
 
     return (
-      <Column>
-        <div className='slist slist--flex' onScroll={this.handleScroll}>
-          <div className='account__section-headline'>
-            <div style={{ width: '100%', display: 'flex' }}>
-              <NavLink exact to={`/@${accountUsername}`}>
-                <FormattedMessage id='account.posts' defaultMessage='Posts' />
-              </NavLink>
-              <NavLink exact to={`/@${accountUsername}/with_replies`}>
-                <FormattedMessage id='account.posts_with_replies' defaultMessage='Posts and replies' />
-              </NavLink>
-              <NavLink exact to={`/@${accountUsername}/media`}>
-                <FormattedMessage id='account.media' defaultMessage='Media' />
-              </NavLink>
-            </div>
-          </div>
+      <Column label={`@${accountUsername}`} transparent withHeader={false}>
+        <div role='feed' className='account-gallery__container' ref={this.handleRef}>
+          {attachments.map((attachment, index) => attachment === null ? (
+            <LoadMoreMedia key={'more:' + attachments.getIn(index + 1, 'id')} maxId={index > 0 ? attachments.getIn(index - 1, 'id') : null} onLoadMore={this.handleLoadMore} />
+          ) : (
+            <MediaItem
+              key={`${attachment.getIn(['status', 'id'])}+${attachment.get('id')}`}
+              attachment={attachment}
+              displayWidth={width}
+              onOpenMedia={this.handleOpenMedia}
+            />
+          ))}
 
-          <div role='feed' className='account-gallery__container' ref={this.handleRef}>
-            {attachments.map((attachment, index) => attachment === null ? (
-              <LoadMoreMedia key={'more:' + attachments.getIn(index + 1, 'id')} maxId={index > 0 ? attachments.getIn(index - 1, 'id') : null} onLoadMore={this.handleLoadMore} />
-            ) : (
-              <MediaItem
-                key={`${attachment.getIn(['status', 'id'])}+${attachment.get('id')}`}
-                attachment={attachment}
-                displayWidth={width}
-                onOpenMedia={this.handleOpenMedia}
-              />
-            ))}
-
-            {
-              attachments.size === 0 &&
+          {
+            attachments.size === 0 &&
               <div className='empty-column-indicator'>
                 <FormattedMessage id='account_gallery.none' defaultMessage='No media to show.' />
               </div>
-            }
+          }
 
-            {loadOlder}
-          </div>
-
-          {isLoading && attachments.size === 0 && (
-            <div className='slist__append'>
-              <LoadingIndicator />
-            </div>
-          )}
+          {loadOlder}
         </div>
+
+        {isLoading && attachments.size === 0 && (
+          <div className='slist__append'>
+            <Spinner />
+          </div>
+        )}
       </Column>
     );
   }

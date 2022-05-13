@@ -1,13 +1,15 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
-import ImmutablePropTypes from 'react-immutable-proptypes';
-import { changeValue, submit, setUp } from '../../../actions/group_editor';
-import { defineMessages, injectIntl } from 'react-intl';
-import LoadingIndicator from '../../../components/loading_indicator';
-import MissingIndicator from 'soapbox/components/missing_indicator';
-import Column from '../../../components/column';
 import classNames from 'classnames';
+import PropTypes from 'prop-types';
+import React from 'react';
+import ImmutablePropTypes from 'react-immutable-proptypes';
+import { defineMessages, injectIntl } from 'react-intl';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
+
+import MissingIndicator from 'soapbox/components/missing_indicator';
+import { Column, Spinner } from 'soapbox/components/ui';
+
+import { changeValue, submit, setUp } from '../../../actions/group_editor';
 
 const messages = defineMessages({
   title: { id: 'groups.form.title', defaultMessage: 'Title' },
@@ -35,11 +37,8 @@ const mapDispatchToProps = dispatch => ({
 
 export default @connect(mapStateToProps, mapDispatchToProps)
 @injectIntl
+@withRouter
 class Edit extends React.PureComponent {
-
-  static contextTypes = {
-    router: PropTypes.object,
-  }
 
   static propTypes = {
     group: ImmutablePropTypes.map,
@@ -53,6 +52,7 @@ class Edit extends React.PureComponent {
     onDescriptionChange: PropTypes.func.isRequired,
     onCoverImageChange: PropTypes.func.isRequired,
     setUp: PropTypes.func.isRequired,
+    history: PropTypes.object,
   };
 
   constructor(props) {
@@ -80,11 +80,11 @@ class Edit extends React.PureComponent {
 
   handleSubmit = e => {
     e.preventDefault();
-    this.props.onSubmit(this.context.router.history);
+    this.props.onSubmit(this.props.history);
   }
 
   handleClick = () => {
-    this.props.onSubmit(this.context.router.history);
+    this.props.onSubmit(this.props.history);
   }
 
   render() {
@@ -93,14 +93,12 @@ class Edit extends React.PureComponent {
     if (typeof group === 'undefined') {
       return (
         <Column>
-          <LoadingIndicator />
+          <Spinner />
         </Column>
       );
     } else if (group === false) {
       return (
-        <Column>
-          <MissingIndicator />
-        </Column>
+        <MissingIndicator />
       );
     }
 

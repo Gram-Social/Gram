@@ -1,15 +1,16 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
-import { connect } from 'react-redux';
 import ImmutablePureComponent from 'react-immutable-pure-component';
-import { injectIntl, defineMessages } from 'react-intl';
-import { setupListEditor, clearListSuggestions, resetListEditor } from '../../actions/lists';
+import { injectIntl, defineMessages, FormattedMessage } from 'react-intl';
+import { connect } from 'react-redux';
+
+import { setupListEditor, clearListSuggestions, resetListEditor } from 'soapbox/actions/lists';
+import { CardHeader, CardTitle, Modal } from 'soapbox/components/ui';
+
 import Account from './components/account';
-import Search from './components/search';
 import EditListForm from './components/edit_list_form';
-import ColumnSubheading from '../ui/components/column_subheading';
-import IconButton from 'soapbox/components/icon_button';
+import Search from './components/search';
 
 const mapStateToProps = state => ({
   accountIds: state.getIn(['listEditor', 'accounts', 'items']),
@@ -63,23 +64,24 @@ class ListEditor extends ImmutablePureComponent {
     const { accountIds, searchAccountIds, intl } = this.props;
 
     return (
-      <div className='modal-root__modal compose-modal'>
-        <div className='compose-modal__header'>
-          <h3 className='compose-modal__header__title'>
-            {intl.formatMessage(messages.editList)}
-          </h3>
-          <IconButton className='compose-modal__close' title={intl.formatMessage(messages.close)} icon='times' onClick={this.onClickClose} size={20} />
-        </div>
-        <div className='compose-modal__content'>
+      <Modal
+        title={<FormattedMessage id='lists.edit' defaultMessage='Edit list' />}
+        onClose={this.onClickClose}
+      >
+        <div className='compose-modal__content list-editor__content'>
           <div className='list-editor'>
-            <ColumnSubheading text={intl.formatMessage(messages.changeTitle)} />
+            <CardHeader>
+              <CardTitle title={intl.formatMessage(messages.changeTitle)} />
+            </CardHeader>
             <EditListForm />
             <br />
 
             {
               accountIds.size > 0 &&
               <div>
-                <ColumnSubheading text={intl.formatMessage(messages.removeFromList)} />
+                <CardHeader>
+                  <CardTitle title={intl.formatMessage(messages.removeFromList)} />
+                </CardHeader>
                 <div className='list-editor__accounts'>
                   {accountIds.map(accountId => <Account key={accountId} accountId={accountId} added />)}
                 </div>
@@ -87,14 +89,16 @@ class ListEditor extends ImmutablePureComponent {
             }
 
             <br />
-            <ColumnSubheading text={intl.formatMessage(messages.addToList)} />
+            <CardHeader>
+              <CardTitle title={intl.formatMessage(messages.addToList)} />
+            </CardHeader>
             <Search />
             <div className='list-editor__accounts'>
               {searchAccountIds.map(accountId => <Account key={accountId} accountId={accountId} />)}
             </div>
           </div>
         </div>
-      </div>
+      </Modal>
     );
   }
 

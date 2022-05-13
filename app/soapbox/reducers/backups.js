@@ -1,8 +1,9 @@
+import { Map as ImmutableMap, fromJS } from 'immutable';
+
 import {
   BACKUPS_FETCH_SUCCESS,
   BACKUPS_CREATE_SUCCESS,
 } from '../actions/backups';
-import { Map as ImmutableMap, fromJS } from 'immutable';
 
 const initialState = ImmutableMap();
 
@@ -17,11 +18,11 @@ const importBackups = (state, backups) => {
 };
 
 export default function backups(state = initialState, action) {
-  switch(action.type) {
-  case BACKUPS_FETCH_SUCCESS:
-  case BACKUPS_CREATE_SUCCESS:
-    return importBackups(state, fromJS(action.backups));
-  default:
-    return state;
+  switch (action.type) {
+    case BACKUPS_FETCH_SUCCESS:
+    case BACKUPS_CREATE_SUCCESS:
+      return importBackups(state, fromJS(action.backups));
+    default:
+      return state;
   }
-};
+}

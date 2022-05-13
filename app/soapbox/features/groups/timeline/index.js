@@ -1,16 +1,18 @@
-import React from 'react';
-import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
-import StatusListContainer from '../../ui/containers/status_list_container';
-import Column from '../../../components/column';
 import { FormattedMessage, injectIntl } from 'react-intl';
+import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
+
+import { Column, Spinner } from 'soapbox/components/ui';
+
+import ComposeFormContainer from '../../../../soapbox/features/compose/containers/compose_form_container';
 import { connectGroupStream } from '../../../actions/streaming';
 import { expandGroupTimeline } from '../../../actions/timelines';
-import MissingIndicator from '../../../components/missing_indicator';
-import LoadingIndicator from '../../../components/loading_indicator';
-import ComposeFormContainer from '../../../../soapbox/features/compose/containers/compose_form_container';
 import Avatar from '../../../components/avatar';
+import MissingIndicator from '../../../components/missing_indicator';
+import StatusListContainer from '../../ui/containers/status_list_container';
 
 const mapStateToProps = (state, props) => {
   const me = state.get('me');
@@ -26,10 +28,6 @@ export default @connect(mapStateToProps)
 @injectIntl
 class GroupTimeline extends React.PureComponent {
 
-  static contextTypes = {
-    router: PropTypes.object,
-  };
-
   static propTypes = {
     params: PropTypes.object.isRequired,
     dispatch: PropTypes.func.isRequired,
@@ -37,7 +35,7 @@ class GroupTimeline extends React.PureComponent {
     hasUnread: PropTypes.bool,
     group: PropTypes.oneOfType([ImmutablePropTypes.map, PropTypes.bool]),
     relationships: ImmutablePropTypes.map,
-    account: ImmutablePropTypes.map,
+    account: ImmutablePropTypes.record,
     intl: PropTypes.object.isRequired,
   };
 
@@ -69,24 +67,24 @@ class GroupTimeline extends React.PureComponent {
     if (typeof group === 'undefined' || !relationships) {
       return (
         <Column>
-          <LoadingIndicator />
+          <Spinner />
         </Column>
       );
     } else if (group === false) {
       return (
-        <Column>
-          <MissingIndicator />
-        </Column>
+        <MissingIndicator />
       );
     }
+
+    const acct = account ? account.get('acct') : '';
 
     return (
       <div>
         {relationships.get('member') && (
           <div className='timeline-compose-block'>
-            <div className='timeline-compose-block__avatar'>
+            <Link className='timeline-compose-block__avatar' to={`/@${acct}`}>
               <Avatar account={account} size={46} />
-            </div>
+            </Link>
             <ComposeFormContainer group={group} shouldCondense autoFocus={false} />
           </div>
         )}

@@ -1,11 +1,5 @@
-import {
-  FAVOURITED_STATUSES_FETCH_REQUEST,
-  FAVOURITED_STATUSES_FETCH_SUCCESS,
-  FAVOURITED_STATUSES_FETCH_FAIL,
-  FAVOURITED_STATUSES_EXPAND_REQUEST,
-  FAVOURITED_STATUSES_EXPAND_SUCCESS,
-  FAVOURITED_STATUSES_EXPAND_FAIL,
-} from '../actions/favourites';
+import { Map as ImmutableMap, OrderedSet as ImmutableOrderedSet } from 'immutable';
+
 import {
   BOOKMARKED_STATUSES_FETCH_REQUEST,
   BOOKMARKED_STATUSES_FETCH_SUCCESS,
@@ -15,9 +9,19 @@ import {
   BOOKMARKED_STATUSES_EXPAND_FAIL,
 } from '../actions/bookmarks';
 import {
-  PINNED_STATUSES_FETCH_SUCCESS,
-} from '../actions/pin_statuses';
-import { Map as ImmutableMap, OrderedSet as ImmutableOrderedSet } from 'immutable';
+  FAVOURITED_STATUSES_FETCH_REQUEST,
+  FAVOURITED_STATUSES_FETCH_SUCCESS,
+  FAVOURITED_STATUSES_FETCH_FAIL,
+  FAVOURITED_STATUSES_EXPAND_REQUEST,
+  FAVOURITED_STATUSES_EXPAND_SUCCESS,
+  FAVOURITED_STATUSES_EXPAND_FAIL,
+  ACCOUNT_FAVOURITED_STATUSES_FETCH_REQUEST,
+  ACCOUNT_FAVOURITED_STATUSES_FETCH_SUCCESS,
+  ACCOUNT_FAVOURITED_STATUSES_FETCH_FAIL,
+  ACCOUNT_FAVOURITED_STATUSES_EXPAND_REQUEST,
+  ACCOUNT_FAVOURITED_STATUSES_EXPAND_SUCCESS,
+  ACCOUNT_FAVOURITED_STATUSES_EXPAND_FAIL,
+} from '../actions/favourites';
 import {
   FAVOURITE_SUCCESS,
   UNFAVOURITE_SUCCESS,
@@ -26,6 +30,9 @@ import {
   PIN_SUCCESS,
   UNPIN_SUCCESS,
 } from '../actions/interactions';
+import {
+  PINNED_STATUSES_FETCH_SUCCESS,
+} from '../actions/pin_statuses';
 import {
   SCHEDULED_STATUSES_FETCH_REQUEST,
   SCHEDULED_STATUSES_FETCH_SUCCESS,
@@ -90,55 +97,65 @@ const removeOneFromList = (state, listType, status) => {
 };
 
 export default function statusLists(state = initialState, action) {
-  switch(action.type) {
-  case FAVOURITED_STATUSES_FETCH_REQUEST:
-  case FAVOURITED_STATUSES_EXPAND_REQUEST:
-    return setLoading(state, 'favourites', true);
-  case FAVOURITED_STATUSES_FETCH_FAIL:
-  case FAVOURITED_STATUSES_EXPAND_FAIL:
-    return setLoading(state, 'favourites', false);
-  case FAVOURITED_STATUSES_FETCH_SUCCESS:
-    return normalizeList(state, 'favourites', action.statuses, action.next);
-  case FAVOURITED_STATUSES_EXPAND_SUCCESS:
-    return appendToList(state, 'favourites', action.statuses, action.next);
-  case BOOKMARKED_STATUSES_FETCH_REQUEST:
-  case BOOKMARKED_STATUSES_EXPAND_REQUEST:
-    return setLoading(state, 'bookmarks', true);
-  case BOOKMARKED_STATUSES_FETCH_FAIL:
-  case BOOKMARKED_STATUSES_EXPAND_FAIL:
-    return setLoading(state, 'bookmarks', false);
-  case BOOKMARKED_STATUSES_FETCH_SUCCESS:
-    return normalizeList(state, 'bookmarks', action.statuses, action.next);
-  case BOOKMARKED_STATUSES_EXPAND_SUCCESS:
-    return appendToList(state, 'bookmarks', action.statuses, action.next);
-  case FAVOURITE_SUCCESS:
-    return prependOneToList(state, 'favourites', action.status);
-  case UNFAVOURITE_SUCCESS:
-    return removeOneFromList(state, 'favourites', action.status);
-  case BOOKMARK_SUCCESS:
-    return prependOneToList(state, 'bookmarks', action.status);
-  case UNBOOKMARK_SUCCESS:
-    return removeOneFromList(state, 'bookmarks', action.status);
-  case PINNED_STATUSES_FETCH_SUCCESS:
-    return normalizeList(state, 'pins', action.statuses, action.next);
-  case PIN_SUCCESS:
-    return prependOneToList(state, 'pins', action.status);
-  case UNPIN_SUCCESS:
-    return removeOneFromList(state, 'pins', action.status);
-  case SCHEDULED_STATUSES_FETCH_REQUEST:
-  case SCHEDULED_STATUSES_EXPAND_REQUEST:
-    return setLoading(state, 'scheduled_statuses', true);
-  case SCHEDULED_STATUSES_FETCH_FAIL:
-  case SCHEDULED_STATUSES_EXPAND_FAIL:
-    return setLoading(state, 'scheduled_statuses', false);
-  case SCHEDULED_STATUSES_FETCH_SUCCESS:
-    return normalizeList(state, 'scheduled_statuses', action.statuses, action.next);
-  case SCHEDULED_STATUSES_EXPAND_SUCCESS:
-    return appendToList(state, 'scheduled_statuses', action.statuses, action.next);
-  case SCHEDULED_STATUS_CANCEL_REQUEST:
-  case SCHEDULED_STATUS_CANCEL_SUCCESS:
-    return removeOneFromList(state, 'scheduled_statuses', action.id || action.status.get('id'));
-  default:
-    return state;
+  switch (action.type) {
+    case FAVOURITED_STATUSES_FETCH_REQUEST:
+    case FAVOURITED_STATUSES_EXPAND_REQUEST:
+      return setLoading(state, 'favourites', true);
+    case FAVOURITED_STATUSES_FETCH_FAIL:
+    case FAVOURITED_STATUSES_EXPAND_FAIL:
+      return setLoading(state, 'favourites', false);
+    case FAVOURITED_STATUSES_FETCH_SUCCESS:
+      return normalizeList(state, 'favourites', action.statuses, action.next);
+    case FAVOURITED_STATUSES_EXPAND_SUCCESS:
+      return appendToList(state, 'favourites', action.statuses, action.next);
+    case ACCOUNT_FAVOURITED_STATUSES_FETCH_REQUEST:
+    case ACCOUNT_FAVOURITED_STATUSES_EXPAND_REQUEST:
+      return setLoading(state, `favourites:${action.accountId}`, true);
+    case ACCOUNT_FAVOURITED_STATUSES_FETCH_FAIL:
+    case ACCOUNT_FAVOURITED_STATUSES_EXPAND_FAIL:
+      return setLoading(state, `favourites:${action.accountId}`, false);
+    case ACCOUNT_FAVOURITED_STATUSES_FETCH_SUCCESS:
+      return normalizeList(state, `favourites:${action.accountId}`, action.statuses, action.next);
+    case ACCOUNT_FAVOURITED_STATUSES_EXPAND_SUCCESS:
+      return appendToList(state, `favourites:${action.accountId}`, action.statuses, action.next);
+    case BOOKMARKED_STATUSES_FETCH_REQUEST:
+    case BOOKMARKED_STATUSES_EXPAND_REQUEST:
+      return setLoading(state, 'bookmarks', true);
+    case BOOKMARKED_STATUSES_FETCH_FAIL:
+    case BOOKMARKED_STATUSES_EXPAND_FAIL:
+      return setLoading(state, 'bookmarks', false);
+    case BOOKMARKED_STATUSES_FETCH_SUCCESS:
+      return normalizeList(state, 'bookmarks', action.statuses, action.next);
+    case BOOKMARKED_STATUSES_EXPAND_SUCCESS:
+      return appendToList(state, 'bookmarks', action.statuses, action.next);
+    case FAVOURITE_SUCCESS:
+      return prependOneToList(state, 'favourites', action.status);
+    case UNFAVOURITE_SUCCESS:
+      return removeOneFromList(state, 'favourites', action.status);
+    case BOOKMARK_SUCCESS:
+      return prependOneToList(state, 'bookmarks', action.status);
+    case UNBOOKMARK_SUCCESS:
+      return removeOneFromList(state, 'bookmarks', action.status);
+    case PINNED_STATUSES_FETCH_SUCCESS:
+      return normalizeList(state, 'pins', action.statuses, action.next);
+    case PIN_SUCCESS:
+      return prependOneToList(state, 'pins', action.status);
+    case UNPIN_SUCCESS:
+      return removeOneFromList(state, 'pins', action.status);
+    case SCHEDULED_STATUSES_FETCH_REQUEST:
+    case SCHEDULED_STATUSES_EXPAND_REQUEST:
+      return setLoading(state, 'scheduled_statuses', true);
+    case SCHEDULED_STATUSES_FETCH_FAIL:
+    case SCHEDULED_STATUSES_EXPAND_FAIL:
+      return setLoading(state, 'scheduled_statuses', false);
+    case SCHEDULED_STATUSES_FETCH_SUCCESS:
+      return normalizeList(state, 'scheduled_statuses', action.statuses, action.next);
+    case SCHEDULED_STATUSES_EXPAND_SUCCESS:
+      return appendToList(state, 'scheduled_statuses', action.statuses, action.next);
+    case SCHEDULED_STATUS_CANCEL_REQUEST:
+    case SCHEDULED_STATUS_CANCEL_SUCCESS:
+      return removeOneFromList(state, 'scheduled_statuses', action.id || action.status.get('id'));
+    default:
+      return state;
   }
-};
+}

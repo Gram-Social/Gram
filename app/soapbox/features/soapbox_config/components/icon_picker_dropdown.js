@@ -1,10 +1,11 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { defineMessages, injectIntl } from 'react-intl';
-import Picker from 'emoji-mart/dist-es/components/picker/picker';
-import Overlay from 'react-overlays/lib/Overlay';
 import classNames from 'classnames';
 import { supportsPassiveEvents } from 'detect-passive-events';
+import Picker from 'emoji-mart/dist-es/components/picker/picker';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { defineMessages, injectIntl } from 'react-intl';
+import Overlay from 'react-overlays/lib/Overlay';
+
 import Icon from 'soapbox/components/icon';
 
 const messages = defineMessages({
@@ -67,8 +68,10 @@ class IconPickerMenu extends React.PureComponent {
     if (!c) return;
 
     // Nice and dirty hack to display the icons
-    c.querySelectorAll('button.emoji-mart-emoji > span').forEach(elem => {
-      elem.innerHTML = `<i class="fa fa-${elem.parentNode.getAttribute('title')}"></i>`;
+    c.querySelectorAll('button.emoji-mart-emoji > img').forEach(elem => {
+      const newIcon = document.createElement('span');
+      newIcon.innerHTML = `<i class="fa fa-${elem.parentNode.getAttribute('title')} fa-hack"></i>`;
+      elem.parentNode.replaceChild(newIcon, elem);
     });
   }
 
@@ -121,7 +124,7 @@ class IconPickerMenu extends React.PureComponent {
       return <div style={{ width: 299 }} />;
     }
 
-    let data = { compressed: true, categories: [], aliases: [], emojis: [] };
+    const data = { compressed: true, categories: [], aliases: [], emojis: [] };
     const title = intl.formatMessage(messages.emoji);
     const { modifierOpen } = this.state;
 
@@ -209,11 +212,21 @@ class IconPickerDropdown extends React.PureComponent {
     const { intl, onPickEmoji, value } = this.props;
     const title = intl.formatMessage(messages.emoji);
     const { active, loading, placement } = this.state;
-    let forkAwesomeIcons = require('../forkawesome.json');
+    const forkAwesomeIcons = require('../forkawesome.json');
 
     return (
-      <div className='font-icon-picker-dropdown' onKeyDown={this.handleKeyDown}>
-        <div ref={this.setTargetRef} className='font-icon-button' title={title} aria-label={title} aria-expanded={active} role='button' onClick={this.onToggle} onKeyDown={this.onToggle} tabIndex={0}>
+      <div onKeyDown={this.handleKeyDown}>
+        <div
+          ref={this.setTargetRef}
+          className='h-[38px] w-[38px] text-lg flex items-center justify-center cursor-pointer'
+          title={title}
+          aria-label={title}
+          aria-expanded={active}
+          role='button'
+          onClick={this.onToggle}
+          onKeyDown={this.onToggle}
+          tabIndex={0}
+        >
           <Icon id={value} />
         </div>
 

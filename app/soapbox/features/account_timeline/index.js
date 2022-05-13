@@ -1,61 +1,74 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import ImmutablePropTypes from 'react-immutable-proptypes';
-import PropTypes from 'prop-types';
-import { fetchAccount, fetchAccountByUsername } from '../../actions/accounts';
-import { expandAccountFeaturedTimeline, expandAccountTimeline } from '../../actions/timelines';
-import StatusList from '../../components/status_list';
-import LoadingIndicator from '../../components/loading_indicator';
-import Column from '../ui/components/column';
 import { OrderedSet as ImmutableOrderedSet } from 'immutable';
+import PropTypes from 'prop-types';
+import React from 'react';
+import ImmutablePropTypes from 'react-immutable-proptypes';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 import { FormattedMessage } from 'react-intl';
-import { fetchAccountIdentityProofs } from '../../actions/identity_proofs';
-import MissingIndicator from 'soapbox/components/missing_indicator';
-import { NavLink } from 'react-router-dom';
-import { fetchPatronAccount } from '../../actions/patron';
+import { connect } from 'react-redux';
+
+import { getSettings } from 'soapbox/actions/settings';
 import { getSoapboxConfig } from 'soapbox/actions/soapbox';
+import MissingIndicator from 'soapbox/components/missing_indicator';
+import { makeGetStatusIds, findAccountByUsername } from 'soapbox/selectors';
+import { getFeatures } from 'soapbox/utils/features';
 
-const mapStateToProps = (state, { params, withReplies = false }) => {
-  const username = params.username || '';
-  const me = state.get('me');
-  const accounts = state.getIn(['accounts']);
-  const accountFetchError = (state.getIn(['accounts', -1, 'username'], '').toLowerCase() === username.toLowerCase());
-  const soapboxConfig = getSoapboxConfig(state);
+import { fetchAccount, fetchAccountByUsername } from '../../actions/accounts';
+import { fetchAccountIdentityProofs } from '../../actions/identity_proofs';
+import { fetchPatronAccount } from '../../actions/patron';
+import { expandAccountFeaturedTimeline, expandAccountTimeline } from '../../actions/timelines';
+import StatusList from '../../components/status_list';
+import { Card, CardBody, Spinner, Text } from '../../components/ui';
 
-  let accountId = -1;
-  let accountUsername = username;
-  let accountApId = null;
-  if (accountFetchError) {
-    accountId = null;
-  } else {
-    let account = accounts.find(acct => username.toLowerCase() === acct.getIn(['acct'], '').toLowerCase());
-    accountId = account ? account.getIn(['id'], null) : -1;
-    accountUsername = account ? account.getIn(['acct'], '') : '';
-    accountApId = account ? account.get('url') : '';
-  }
+const makeMapStateToProps = () => {
+  const getStatusIds = makeGetStatusIds();
 
-  const path = withReplies ? `${accountId}:with_replies` : accountId;
+  const mapStateToProps = (state, { params, withReplies = false }) => {
+    const username = params.username || '';
+    const me = state.get('me');
+    const accountFetchError = ((state.getIn(['accounts', -1, 'username']) || '').toLowerCase() === username.toLowerCase());
+    const soapboxConfig = getSoapboxConfig(state);
+    const features = getFeatures(state.get('instance'));
 
-  const isBlocked = state.getIn(['relationships', accountId, 'blocked_by'], false);
-  const unavailable = (me === accountId) ? false : isBlocked;
+    let accountId = -1;
+    let account = null;
+    let accountUsername = username;
+    let accountApId = null;
+    if (accountFetchError) {
+      accountId = null;
+    } else {
+      account = findAccountByUsername(state, username);
+      accountId = account ? account.getIn(['id'], null) : -1;
+      accountUsername = account ? account.getIn(['acct'], '') : '';
+      accountApId = account ? account.get('url') : '';
+    }
 
-  return {
-    accountId,
-    unavailable,
-    accountUsername,
-    accountApId,
-    isAccount: !!state.getIn(['accounts', accountId]),
-    statusIds: state.getIn(['timelines', `account:${path}`, 'items'], ImmutableOrderedSet()),
-    featuredStatusIds: withReplies ? ImmutableOrderedSet() : state.getIn(['timelines', `account:${accountId}:pinned`, 'items'], ImmutableOrderedSet()),
-    isLoading: state.getIn(['timelines', `account:${path}`, 'isLoading']),
-    hasMore: state.getIn(['timelines', `account:${path}`, 'hasMore']),
-    me,
-    patronEnabled: soapboxConfig.getIn(['extensions', 'patron', 'enabled']),
+    const path = withReplies ? `${accountId}:with_replies` : accountId;
+
+    const isBlocked = state.getIn(['relationships', accountId, 'blocked_by'], false);
+    const unavailable = (me === accountId) ? false : (isBlocked && !features.blockersVisible);
+    const showPins = getSettings(state).getIn(['account_timeline', 'shows', 'pinned']) && !withReplies;
+
+    return {
+      accountId,
+      unavailable,
+      accountUsername,
+      accountApId,
+      isBlocked,
+      account,
+      isAccount: !!state.getIn(['accounts', accountId]),
+      statusIds: getStatusIds(state, { type: `account:${path}`, prefix: 'account_timeline' }),
+      featuredStatusIds: showPins ? getStatusIds(state, { type: `account:${accountId}:pinned`, prefix: 'account_timeline' }) : ImmutableOrderedSet(),
+      isLoading: state.getIn(['timelines', `account:${path}`, 'isLoading']),
+      hasMore: state.getIn(['timelines', `account:${path}`, 'hasMore']),
+      me,
+      patronEnabled: soapboxConfig.getIn(['extensions', 'patron', 'enabled']),
+    };
   };
+
+  return mapStateToProps;
 };
 
-export default @connect(mapStateToProps)
+export default @connect(makeMapStateToProps)
 class AccountTimeline extends ImmutablePureComponent {
 
   static propTypes = {
@@ -92,8 +105,9 @@ class AccountTimeline extends ImmutablePureComponent {
   }
 
   componentDidUpdate(prevProps) {
-    const { me, accountId, withReplies, accountApId, patronEnabled } = this.props;
-    if (accountId && accountId !== -1 && (accountId !== prevProps.accountId && accountId) || withReplies !== prevProps.withReplies) {
+    const { params: { username }, me, accountId, withReplies, accountApId, patronEnabled } = this.props;
+
+    if (accountId && (accountId !== -1) && (accountId !== prevProps.accountId) || withReplies !== prevProps.withReplies) {
       this.props.dispatch(fetchAccount(accountId));
       if (me) this.props.dispatch(fetchAccountIdentityProofs(accountId));
 
@@ -106,6 +120,8 @@ class AccountTimeline extends ImmutablePureComponent {
       }
 
       this.props.dispatch(expandAccountTimeline(accountId, { withReplies }));
+    } else if (username && (username !== prevProps.params.username)) {
+      this.props.dispatch(fetchAccountByUsername(username));
     }
   }
 
@@ -116,57 +132,46 @@ class AccountTimeline extends ImmutablePureComponent {
   }
 
   render() {
-    const { statusIds, featuredStatusIds, isLoading, hasMore, isAccount, accountId, unavailable, accountUsername } = this.props;
+    const { statusIds, featuredStatusIds, isLoading, hasMore, isBlocked, isAccount, accountId, unavailable, accountUsername } = this.props;
 
     if (!isAccount && accountId !== -1) {
       return (
-        <Column>
-          <MissingIndicator />
-        </Column>
+        <MissingIndicator nested />
       );
     }
 
     if (accountId === -1 || (!statusIds && isLoading)) {
       return (
-        <Column>
-          <LoadingIndicator />
-        </Column>
+        <Spinner />
       );
     }
 
     if (unavailable) {
       return (
-        <Column>
-          <div className='empty-column-indicator'>
-            <FormattedMessage id='empty_column.account_unavailable' defaultMessage='Profile unavailable' />
-          </div>
-        </Column>
+        <Card>
+          <CardBody>
+            <Text align='center'>
+              {isBlocked ? (
+                <FormattedMessage id='empty_column.account_blocked' defaultMessage='You are blocked by @{accountUsername}.' values={{ accountUsername: accountUsername }} />
+              ) : (
+                <FormattedMessage id='empty_column.account_unavailable' defaultMessage='Profile unavailable' />
+              )}
+            </Text>
+          </CardBody>
+        </Card>
       );
     }
 
     return (
-      <Column>
-        <div className='account__section-headline'>
-          <NavLink exact to={`/@${accountUsername}`}>
-            <FormattedMessage id='account.posts' defaultMessage='Posts' />
-          </NavLink>
-          <NavLink exact to={`/@${accountUsername}/with_replies`}>
-            <FormattedMessage id='account.posts_with_replies' defaultMessage='Posts and replies' />
-          </NavLink>
-          <NavLink exact to={`/@${accountUsername}/media`}>
-            <FormattedMessage id='account.media' defaultMessage='Media' />
-          </NavLink>
-        </div>
-        <StatusList
-          scrollKey='account_timeline'
-          statusIds={statusIds}
-          featuredStatusIds={featuredStatusIds}
-          isLoading={isLoading}
-          hasMore={hasMore}
-          onLoadMore={this.handleLoadMore}
-          emptyMessage={<FormattedMessage id='empty_column.account_timeline' defaultMessage='No posts here!' />}
-        />
-      </Column>
+      <StatusList
+        scrollKey='account_timeline'
+        statusIds={statusIds}
+        featuredStatusIds={featuredStatusIds}
+        isLoading={isLoading}
+        hasMore={hasMore}
+        onLoadMore={this.handleLoadMore}
+        emptyMessage={<FormattedMessage id='empty_column.account_timeline' defaultMessage='No posts here!' />}
+      />
     );
   }
 

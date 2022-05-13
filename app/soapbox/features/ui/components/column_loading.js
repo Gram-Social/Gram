@@ -1,31 +1,13 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
-import Column from '../../../components/column';
-import ColumnHeader from '../../../components/column_header';
-import ImmutablePureComponent from 'react-immutable-pure-component';
-import LoadingIndicator from 'soapbox/components/loading_indicator';
+import { Card, CardBody, Spinner } from 'soapbox/components/ui';
 
-export default class ColumnLoading extends ImmutablePureComponent {
+const ColumnLoading = () => (
+  <Card variant='rounded'>
+    <CardBody>
+      <Spinner />
+    </CardBody>
+  </Card>
+);
 
-  static propTypes = {
-    title: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
-    icon: PropTypes.string,
-  };
-
-  static defaultProps = {
-    title: '',
-    icon: '',
-  };
-
-  render() {
-    let { title, icon } = this.props;
-    return (
-      <Column>
-        <ColumnHeader icon={icon} title={title} focusable={false} />
-        <LoadingIndicator />
-      </Column>
-    );
-  }
-
-}
+export default ColumnLoading;

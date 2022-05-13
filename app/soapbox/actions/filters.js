@@ -1,7 +1,9 @@
 import { defineMessages } from 'react-intl';
-import api from '../api';
+
 import snackbar from 'soapbox/actions/snackbar';
 import { isLoggedIn } from 'soapbox/utils/auth';
+
+import api from '../api';
 
 export const FILTERS_FETCH_REQUEST = 'FILTERS_FETCH_REQUEST';
 export const FILTERS_FETCH_SUCCESS = 'FILTERS_FETCH_SUCCESS';
@@ -65,7 +67,7 @@ export function createFilter(intl, phrase, expires_at, context, whole_word, irre
 export function deleteFilter(intl, id) {
   return (dispatch, getState) => {
     dispatch({ type: FILTERS_DELETE_REQUEST });
-    return api(getState).delete('/api/v1/filters/'+id).then(response => {
+    return api(getState).delete('/api/v1/filters/' + id).then(response => {
       dispatch({ type: FILTERS_DELETE_SUCCESS, filter: response.data });
       dispatch(snackbar.success(intl.formatMessage(messages.removed)));
     }).catch(error => {

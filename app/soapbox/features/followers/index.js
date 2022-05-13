@@ -1,40 +1,48 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import ImmutablePureComponent from 'react-immutable-pure-component';
-import PropTypes from 'prop-types';
-import ImmutablePropTypes from 'react-immutable-proptypes';
 import { debounce } from 'lodash';
-import LoadingIndicator from '../../components/loading_indicator';
+import PropTypes from 'prop-types';
+import React from 'react';
+import ImmutablePropTypes from 'react-immutable-proptypes';
+import ImmutablePureComponent from 'react-immutable-pure-component';
+import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
+import { connect } from 'react-redux';
+
+import MissingIndicator from 'soapbox/components/missing_indicator';
+import { Spinner } from 'soapbox/components/ui';
+import { findAccountByUsername } from 'soapbox/selectors';
+import { getFollowDifference } from 'soapbox/utils/accounts';
+import { getFeatures } from 'soapbox/utils/features';
+
 import {
   fetchAccount,
   fetchFollowers,
   expandFollowers,
   fetchAccountByUsername,
 } from '../../actions/accounts';
-import { FormattedMessage } from 'react-intl';
+import ScrollableList from '../../components/scrollable_list';
 import AccountContainer from '../../containers/account_container';
 import Column from '../ui/components/column';
-import ScrollableList from '../../components/scrollable_list';
-import MissingIndicator from 'soapbox/components/missing_indicator';
-import { getFollowDifference } from 'soapbox/utils/accounts';
+
+const messages = defineMessages({
+  heading: { id: 'column.followers', defaultMessage: 'Followers' },
+});
 
 const mapStateToProps = (state, { params, withReplies = false }) => {
   const username = params.username || '';
   const me = state.get('me');
-  const accounts = state.getIn(['accounts']);
-  const accountFetchError = (state.getIn(['accounts', -1, 'username'], '').toLowerCase() === username.toLowerCase());
+  const accountFetchError = ((state.getIn(['accounts', -1, 'username']) || '').toLowerCase() === username.toLowerCase());
+  const features = getFeatures(state.get('instance'));
 
   let accountId = -1;
   if (accountFetchError) {
     accountId = null;
   } else {
-    let account = accounts.find(acct => username.toLowerCase() === acct.getIn(['acct'], '').toLowerCase());
+    const account = findAccountByUsername(state, username);
     accountId = account ? account.getIn(['id'], null) : -1;
   }
 
   const diffCount = getFollowDifference(state, accountId, 'followers');
   const isBlocked = state.getIn(['relationships', accountId, 'blocked_by'], false);
-  const unavailable = (me === accountId) ? false : isBlocked;
+  const unavailable = (me === accountId) ? false : (isBlocked && !features.blockersVisible);
 
   return {
     accountId,
@@ -47,9 +55,11 @@ const mapStateToProps = (state, { params, withReplies = false }) => {
 };
 
 export default @connect(mapStateToProps)
+@injectIntl
 class Followers extends ImmutablePureComponent {
 
   static propTypes = {
+    intl: PropTypes.object.isRequired,
     params: PropTypes.object.isRequired,
     dispatch: PropTypes.func.isRequired,
     accountIds: ImmutablePropTypes.orderedSet,
@@ -85,42 +95,37 @@ class Followers extends ImmutablePureComponent {
   }, 300, { leading: true });
 
   render() {
-    const { accountIds, hasMore, diffCount, isAccount, accountId, unavailable } = this.props;
+    const { intl, accountIds, hasMore, diffCount, isAccount, accountId, unavailable } = this.props;
 
     if (!isAccount && accountId !== -1) {
       return (
-        <Column>
-          <MissingIndicator />
-        </Column>
+        <MissingIndicator />
       );
     }
 
     if (accountId === -1 || (!accountIds)) {
       return (
-        <Column>
-          <LoadingIndicator />
-        </Column>
+        <Spinner />
       );
     }
 
     if (unavailable) {
       return (
-        <Column>
-          <div className='empty-column-indicator'>
-            <FormattedMessage id='empty_column.account_unavailable' defaultMessage='Profile unavailable' />
-          </div>
-        </Column>
+        <div className='empty-column-indicator'>
+          <FormattedMessage id='empty_column.account_unavailable' defaultMessage='Profile unavailable' />
+        </div>
       );
     }
 
     return (
-      <Column>
+      <Column label={intl.formatMessage(messages.heading)} withHeader={false} transparent>
         <ScrollableList
           scrollKey='followers'
           hasMore={hasMore}
           diffCount={diffCount}
           onLoadMore={this.handleLoadMore}
           emptyMessage={<FormattedMessage id='account.followers.empty' defaultMessage='No one follows this user yet.' />}
+          itemClassName='pb-4'
         >
           {accountIds.map(id =>
             <AccountContainer key={id} id={id} withNote={false} />,

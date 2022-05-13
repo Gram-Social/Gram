@@ -1,3 +1,5 @@
+import { fromJS } from 'immutable';
+
 import {
   sortEmoji,
   mergeEmojiFavourites,
@@ -8,16 +10,15 @@ import {
   simulateEmojiReact,
   simulateUnEmojiReact,
 } from '../emoji_reacts';
-import { fromJS } from 'immutable';
 
-const ALLOWED_EMOJI = [
+const ALLOWED_EMOJI = fromJS([
   '👍',
   '❤',
   '😂',
   '😯',
   '😢',
   '😡',
-];
+]);
 
 describe('filterEmoji', () => {
   describe('with a mix of allowed and disallowed emoji', () => {
@@ -167,7 +168,7 @@ describe('getReactForStatus', () => {
   });
 
   it('returns undefined when a status has no reacts (or favourites)', () => {
-    const status = fromJS([]);
+    const status = fromJS({});
     expect(getReactForStatus(status)).toEqual(undefined);
   });
 

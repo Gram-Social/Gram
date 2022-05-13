@@ -1,6 +1,8 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { injectIntl, defineMessages } from 'react-intl';
-import PropTypes from 'prop-types';
+
+import { Text } from './ui';
 
 const messages = defineMessages({
   just_now: { id: 'relative_time.just_now', defaultMessage: 'now' },
@@ -52,16 +54,16 @@ const selectUnits = delta => {
 
 const getUnitDelay = units => {
   switch (units) {
-  case 'second':
-    return SECOND;
-  case 'minute':
-    return MINUTE;
-  case 'hour':
-    return HOUR;
-  case 'day':
-    return DAY;
-  default:
-    return MAX_DELAY;
+    case 'second':
+      return SECOND;
+    case 'minute':
+      return MINUTE;
+    case 'hour':
+      return HOUR;
+    case 'day':
+      return DAY;
+    default:
+      return MAX_DELAY;
   }
 };
 
@@ -137,7 +139,7 @@ class RelativeTimestamp extends React.Component {
       this.state.now !== nextState.now;
   }
 
-  componentDidUpdate(prevProps) {
+  UNSAFE_componentWillReceiveProps(prevProps) {
     if (this.props.timestamp !== prevProps.timestamp) {
       this.setState({ now: Date.now() });
     }
@@ -147,7 +149,7 @@ class RelativeTimestamp extends React.Component {
     this._scheduleNextUpdate(this.props, this.state);
   }
 
-  componentDidUpdate() {
+  UNSAFE_componentWillUpdate() {
     this._scheduleNextUpdate();
   }
 
@@ -171,15 +173,15 @@ class RelativeTimestamp extends React.Component {
   }
 
   render() {
-    const { timestamp, intl, year, futureDate } = this.props;
+    const { timestamp, intl, year, futureDate, ...textProps } = this.props;
 
     const date         = new Date(timestamp);
     const relativeTime = futureDate ? timeRemainingString(intl, date, this.state.now) : timeAgoString(intl, date, this.state.now, year);
 
     return (
-      <time dateTime={timestamp} title={intl.formatDate(date, dateFormatOptions)}>
+      <Text {...textProps} color='inherit' tag='time' title={intl.formatDate(date, dateFormatOptions)}>
         {relativeTime}
-      </time>
+      </Text>
     );
   }
 

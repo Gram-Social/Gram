@@ -7,8 +7,7 @@
 }
 
 .detailed-status {
-  background: hsla(var(--brand-color_hsl), 0.03);
-  padding: 14px 10px;
+  // padding: 14px 10px;
 
   &--flex {
     display: flex;
@@ -57,14 +56,27 @@
   font-size: 14px;
   line-height: 18px;
   display: flex;
+}
 
-  i {
-    margin-right: 0.4em;
+.detailed-status__timestamp {
+  display: flex;
+  align-items: center;
+
+  .svg-icon {
+    width: 20px;
+    height: 20px;
+
+    svg {
+      stroke-width: 1.3px;
+    }
+  }
+
+  .svg-icon {
+    margin-right: 5px;
   }
 }
 
 .detailed-status__action-bar {
-  background: hsla(var(--brand-color_hsl), 0.03);
   border-top: 1px solid var(--brand-color--faint);
   border-bottom: 1px solid var(--brand-color--faint);
   display: flex;
@@ -73,9 +85,9 @@
 
 .detailed-status__link {
   color: var(--primary-text-color--faint);
-  cursor: pointer;
   text-decoration: none;
   font-size: 13px;
+  cursor: pointer;
 }
 
 .detailed-status__button {
@@ -88,10 +100,26 @@
     display: inline-flex;
     align-items: center;
 
-    .icon_button__text {
+    &__text {
       font-size: 14px;
-      padding-left: 3px;
-      transform: translateY(-1px);
+      padding-left: 5px;
+    }
+  }
+
+  .emoji-picker-expand {
+    display: none;
+  }
+
+  &:focus-within {
+    .emoji-picker-expand {
+      display: inline-flex;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+
+      &:focus-within {
+        width: unset;
+      }
     }
   }
 }
@@ -114,7 +142,6 @@
 
   strong,
   span {
-    display: inline-block;
     text-overflow: ellipsis;
     overflow: hidden;
   }
@@ -130,7 +157,7 @@
 
   .display-name__account {
     display: block;
-    margin-top: -10px;
+    margin-top: -5px;
   }
 }
 
@@ -139,7 +166,72 @@
   margin-right: 10px;
 }
 
-.detailed-status .status__favicon {
-  float: left;
-  margin-right: 5px;
+.thread {
+  @apply bg-white dark:bg-slate-800 p-4 shadow-xl dark:shadow-inset sm:p-6 sm:rounded-xl;
+
+  &__status {
+    @apply relative pb-4;
+
+    .status__wrapper {
+      @apply shadow-none p-0;
+    }
+
+    // // Only display line if posts are below
+    // &:last-child .detailed-status__action-bar {
+    //   border-bottom: 0;
+    // }
+  }
+
+  .status__content-wrapper {
+    padding-left: calc(42px + 12px);
+  }
+
+  // &__descendants &__status:first-child {
+  //   margin-top: 10px;
+
+  //   .status__wrapper--filtered {
+  //     margin-top: -10px;
+  //   }
+  // }
+
+  // &__status--focused:first-child,
+  // &__ancestors &__status:first-child {
+  //   margin-top: 10px;
+
+  //   .status__wrapper--filtered {
+  //     margin-top: -10px;
+  //   }
+  // }
+
+  // &__descendants &__status:last-child {
+  //   margin-bottom: 10px;
+
+  //   .status__wrapper--filtered {
+  //     margin-bottom: -10px;
+  //   }
+  // }
+
+  &__connector {
+    @apply bg-gray-200 dark:bg-gray-600 absolute w-0.5 left-5 hidden;
+
+    &--bottom {
+      @apply block;
+      height: calc(100% - 42px - 8px - 1rem);
+      top: calc(12px + 42px);
+    }
+  }
+}
+
+.thread {
+  .ptr,
+  .ptr__children {
+    background: var(--foreground-color) !important;
+    border-radius: 10px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+
+    @media screen and (max-width: 580px) {
+      border-radius: 0;
+    }
+  }
 }

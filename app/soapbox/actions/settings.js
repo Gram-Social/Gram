@@ -1,21 +1,29 @@
-import { debounce } from 'lodash';
-import { showAlertForError } from './alerts';
-import { patchMe } from 'soapbox/actions/me';
-import { Map as ImmutableMap, List as ImmutableList } from 'immutable';
-import { isLoggedIn } from 'soapbox/utils/auth';
-import uuid from '../uuid';
+import { Map as ImmutableMap, List as ImmutableList, OrderedSet as ImmutableOrderedSet } from 'immutable';
+import { defineMessages } from 'react-intl';
 import { createSelector } from 'reselect';
+import { v4 as uuid } from 'uuid';
+
+import { patchMe } from 'soapbox/actions/me';
+import { isLoggedIn } from 'soapbox/utils/auth';
+
+import { showAlertForError } from './alerts';
+import snackbar from './snackbar';
 
 export const SETTING_CHANGE = 'SETTING_CHANGE';
 export const SETTING_SAVE   = 'SETTING_SAVE';
+export const SETTINGS_UPDATE = 'SETTINGS_UPDATE';
 
 export const FE_NAME = 'soapbox_fe';
 
+const messages = defineMessages({
+  saveSuccess: { id: 'settings.save.success', defaultMessage: 'Your preferences have been saved!' },
+});
+
 export const defaultSettings = ImmutableMap({
   onboarded: false,
-
   skinTone: 1,
   reduceMotion: false,
+  underlineLinks: false,
   autoPlayGif: true,
   displayMedia: 'default',
   expandSpoilers: false,
@@ -25,15 +33,18 @@ export const defaultSettings = ImmutableMap({
   missingDescriptionModal: false,
   defaultPrivacy: 'public',
   defaultContentType: 'text/plain',
-  themeMode: 'light',
+  themeMode: 'system',
   locale: navigator.language.split(/[-_]/)[0] || 'en',
   showExplanationBox: true,
   explanationBox: true,
-  otpEnabled: false,
+  autoloadTimelines: true,
+  autoloadMore: true,
 
   systemFont: false,
   dyslexicFont: false,
   demetricator: false,
+
+  isDeveloper: false,
 
   chats: ImmutableMap({
     panes: ImmutableList(),
@@ -73,7 +84,7 @@ export const defaultSettings = ImmutableMap({
 
     shows: ImmutableMap({
       follow: true,
-      follow_request: false,
+      follow_request: true,
       favourite: true,
       reblog: true,
       mention: true,
@@ -92,12 +103,17 @@ export const defaultSettings = ImmutableMap({
       move: false,
       'pleroma:emoji_reaction': false,
     }),
+
+    birthdays: ImmutableMap({
+      show: true,
+    }),
   }),
 
   community: ImmutableMap({
     shows: ImmutableMap({
       reblog: false,
       reply: true,
+      direct: false,
     }),
     other: ImmutableMap({
       onlyMedia: false,
@@ -111,6 +127,7 @@ export const defaultSettings = ImmutableMap({
     shows: ImmutableMap({
       reblog: true,
       reply: true,
+      direct: false,
     }),
     other: ImmutableMap({
       onlyMedia: false,
@@ -126,6 +143,14 @@ export const defaultSettings = ImmutableMap({
     }),
   }),
 
+  account_timeline: ImmutableMap({
+    shows: ImmutableMap({
+      reblog: true,
+      pinned: true,
+      direct: false,
+    }),
+  }),
+
   trends: ImmutableMap({
     show: true,
   }),
@@ -135,6 +160,10 @@ export const defaultSettings = ImmutableMap({
     ImmutableMap({ id: 'HOME', uuid: uuid(), params: {} }),
     ImmutableMap({ id: 'NOTIFICATIONS', uuid: uuid(), params: {} }),
   ]),
+
+  remote_timeline: ImmutableMap({
+    pinnedHosts: ImmutableOrderedSet(),
+  }),
 });
 
 export const getSettings = createSelector([
@@ -146,7 +175,7 @@ export const getSettings = createSelector([
     .mergeDeep(settings);
 });
 
-export function changeSetting(path, value) {
+export function changeSettingImmediate(path, value) {
   return dispatch => {
     dispatch({
       type: SETTING_CHANGE,
@@ -154,29 +183,47 @@ export function changeSetting(path, value) {
       value,
     });
 
-    dispatch(saveSettings());
+    dispatch(saveSettingsImmediate());
   };
-};
+}
 
-const debouncedSave = debounce((dispatch, getState) => {
-  if (!isLoggedIn(getState)) return;
+export function changeSetting(path, value, intl) {
+  return dispatch => {
+    dispatch({
+      type: SETTING_CHANGE,
+      path,
+      value,
+    });
 
-  const state = getState();
-  if (getSettings(state).getIn(['saved'])) return;
+    return dispatch(saveSettings(intl));
+  };
+}
 
-  const data = state.get('settings').delete('saved').toJS();
+export function saveSettingsImmediate(intl) {
+  return (dispatch, getState) => {
+    if (!isLoggedIn(getState)) return;
 
-  dispatch(patchMe({
-    pleroma_settings_store: {
-      [FE_NAME]: data,
-    },
-  })).then(response => {
-    dispatch({ type: SETTING_SAVE });
-  }).catch(error => {
-    dispatch(showAlertForError(error));
-  });
-}, 5000, { trailing: true });
+    const state = getState();
+    if (getSettings(state).getIn(['saved'])) return;
 
-export function saveSettings() {
-  return (dispatch, getState) => debouncedSave(dispatch, getState);
-};
+    const data = state.get('settings').delete('saved').toJS();
+
+    dispatch(patchMe({
+      pleroma_settings_store: {
+        [FE_NAME]: data,
+      },
+    })).then(response => {
+      dispatch({ type: SETTING_SAVE });
+
+      if (intl) {
+        dispatch(snackbar.success(intl.formatMessage(messages.saveSuccess)));
+      }
+    }).catch(error => {
+      dispatch(showAlertForError(error));
+    });
+  };
+}
+
+export function saveSettings(intl) {
+  return (dispatch, getState) => dispatch(saveSettingsImmediate(intl));
+}
